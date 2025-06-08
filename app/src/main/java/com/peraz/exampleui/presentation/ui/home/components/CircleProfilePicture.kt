@@ -1,5 +1,6 @@
 package com.peraz.exampleui.presentation.ui.home.components
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
@@ -15,13 +16,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.peraz.exampleui.R
+import com.peraz.exampleui.presentation.ui.theme.dark_blue
 
 @Composable
 fun CircleProfilePicture(
     navigateMenu: () -> Unit,
     name: String,
-    modifier: Modifier=Modifier
+    modifier: Modifier=Modifier,
+    onClick: (Boolean)-> Unit,
 ){
+    var boleano=false
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Image(painter = painterResource(R.drawable.profilepic), contentDescription = null, modifier=Modifier.size(50.dp).weight(.5f).padding(start = 20.dp)
             .clickable{
@@ -30,7 +34,14 @@ fun CircleProfilePicture(
         Text(text = "Hi $name", modifier=Modifier.size(50.dp).weight(.6f).padding(0.dp,15.dp), color = Color.White)
         Image(painter = painterResource(R.drawable.bellcircle), contentDescription = null, modifier=Modifier.size(35.dp).weight(1f).padding(start = 100.dp)
             .clickable{
-
+                if (boleano){
+                    Log.d("Pendejo","$boleano")
+                    boleano=!boleano
+                }else{
+                    Log.d("Pendejo","$boleano")
+                    boleano=!boleano
+                }
+                onClick(boleano)
             })
     }
 }
@@ -38,9 +49,5 @@ fun CircleProfilePicture(
 @Preview(showBackground = true, backgroundColor = 0)
 @Composable
 fun CircleProfilePicturePreview(){
-    CircleProfilePicture(
-        navigateMenu = {},
-        name = "Pedro",
-        modifier = Modifier.padding(top = 40.dp)
-    )
+
 }

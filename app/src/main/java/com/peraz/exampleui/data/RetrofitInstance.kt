@@ -23,7 +23,7 @@ object RetrofitInstance {
             .create(ApiInterface::class.java)
     }
 
-    private fun getUnsafeOkHttpClient(): OkHttpClient? {
+    internal fun getUnsafeOkHttpClient(): OkHttpClient? {
         return try {
             // Create a trust manager that does not validate certificate chains
             val trustAllCerts = arrayOf<TrustManager>(

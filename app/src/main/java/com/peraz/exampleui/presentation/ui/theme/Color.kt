@@ -13,3 +13,5 @@ val Pink40 = Color(0xFF7D5260)
 val dark_blue=Color(0xFF32357a)
 val light_blue=Color(0xFFF2F1F6)
 val searchbar=Color(0xFF7173A8)
+
+val pink_light=Color(0xFFf9a4e7)

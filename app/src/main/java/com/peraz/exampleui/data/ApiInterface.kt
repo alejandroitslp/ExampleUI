@@ -10,4 +10,7 @@ interface ApiInterface {
 
     @GET("/api/randomCollection")
     suspend fun getRandomCollections(): Response<RandomCollModel>
+
+    @GET("/api/collections/{id}")
+    suspend fun getSpecificCollection(@Path("id") searchById: Int? ): Response<RandomCollModel>
 }

@@ -3,6 +3,8 @@ package com.peraz.exampleui.presentation.ui.home
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -54,6 +56,8 @@ import com.peraz.exampleui.presentation.ui.home.components.BottomBar
 import com.peraz.exampleui.presentation.ui.home.components.CardItems
 import com.peraz.exampleui.presentation.ui.home.components.CircleProfilePicture
 import com.peraz.exampleui.presentation.ui.home.components.CollectionItems
+import com.peraz.exampleui.presentation.ui.theme.light_blue
+import com.peraz.exampleui.presentation.ui.theme.pink_light
 import com.peraz.exampleui.presentation.ui.theme.searchbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,7 +65,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
-import kotlin.collections.get
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,25 +73,38 @@ fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ){
+
     var collections: CollectionsModel? by remember { mutableStateOf(CollectionsModel()) }
     val context= LocalContext.current
     val scope= rememberCoroutineScope()
     var randomCol: RandomCollModel? by remember{ mutableStateOf(RandomCollModel())}
     var isRefreshing by remember {mutableStateOf(false)}
+    var estadoColor by remember{ mutableStateOf(false) }
+    var backgroundcolor = remember { Animatable(light_blue) }
 
+    LaunchedEffect(estadoColor){
+        backgroundcolor.animateTo(
+            if(estadoColor){
+                pink_light
+            }
+            else{
+                dark_blue
+            }
+            , animationSpec = tween(6000)
+        )
+    }
     LaunchedEffect(key1=true) {
-
-        scope.launch(Dispatchers.IO) {
-            val response = try{
-                RetrofitInstance.api.getCollections()
-            }catch(e: IOException){
-                Toast.makeText(context, "$e" , Toast.LENGTH_LONG).show()
-                return@launch
-            }
-            withContext(Dispatchers.Main) {
-                collections=response.body()
-            }
-        }
+//        scope.launch(Dispatchers.IO) {
+//            val response = try{
+//                RetrofitInstance.api.getCollections()
+//            }catch(e: IOException){
+//                Toast.makeText(context, "$e" , Toast.LENGTH_LONG).show()
+//                return@launch
+//            }
+//            withContext(Dispatchers.Main) {
+//                collections=response.body()
+//            }
+//        }
 
         scope.launch(Dispatchers.IO) {
             val response= try{
@@ -143,12 +159,12 @@ fun HomeScreen(
                             val height = size.height * .16f
                             val rectheight = size.height
                             drawRect(
-                                color = dark_blue,
+                                color = backgroundcolor.value,
                                 topLeft = Offset(0f, 0f),
                                 size = Size(width, rectheight / 1.26f)
                             )
                             drawArc(
-                                color = dark_blue,
+                                color = backgroundcolor.value,
                                 startAngle = 0f,    // Start from the right (3 o'clock)
                                 sweepAngle = 180f,  // Sweep 180 degrees clockwise to the left (9 o'clock)
                                 useCenter = false,  // Don't connect to the center for a clean arc
@@ -162,8 +178,14 @@ fun HomeScreen(
                 ) {
                     Column(modifier = Modifier
                         .padding(top = 40.dp)
-                        .weight(.7f)) {
-                        CircleProfilePicture(name = "Alejandro", navigateMenu = {})
+                        .weight(.7f))
+                        {
+                        CircleProfilePicture(name = "Alejandro", navigateMenu = {
+
+                        }, onClick = {
+                            isAnimatable->
+                            estadoColor=isAnimatable
+                        })
                     }
                     Column(
                         modifier = Modifier
@@ -199,7 +221,17 @@ fun HomeScreen(
                         LazyRow(horizontalArrangement =  Arrangement.Center) {
                             items(collections?.resultado?.size ?: 0) { index ->
 
-                                CollectionItems(collectioName = collections?.resultado?.get(index)?.nombre, image = "${collections?.resultado?.get(index)?.image}")
+                                CollectionItems(
+                                    collectioName = collections?.resultado?.get(index)?.nombre,
+                                    image = "${collections?.resultado?.get(index)?.image}",
+                                    onClick = {
+                                        collectionFromId->
+                                        randomCol=collectionFromId
+                                    },
+                                    scope = scope,
+                                    context = context,
+                                    id = collections?.resultado?.get(index)?.id
+                                )
                             }
                         }
                     }
