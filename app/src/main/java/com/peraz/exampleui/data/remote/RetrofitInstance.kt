@@ -1,6 +1,7 @@
-package com.peraz.exampleui.data
+package com.peraz.exampleui.data.remote
 
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.security.KeyStore
@@ -18,7 +19,7 @@ object RetrofitInstance {
         Retrofit.Builder()
             .baseUrl(Util.Base)
             .addConverterFactory(GsonConverterFactory.create())
-            .client(getUnsafeOkHttpClient())
+            .client(getUnsafeOkHttpClient()!!)
             .build()
             .create(ApiInterface::class.java)
     }
@@ -69,6 +70,11 @@ object RetrofitInstance {
             val builder = OkHttpClient.Builder()
             builder.sslSocketFactory(sslSocketFactory, trustManager)
             builder.hostnameVerifier(HostnameVerifier { _, _ -> true })
+
+            builder.addInterceptor(HttpLoggingInterceptor().apply{
+                level = HttpLoggingInterceptor.Level.BODY
+            })
+
             builder.build()
         } catch (e: Exception) {
             throw RuntimeException(e)

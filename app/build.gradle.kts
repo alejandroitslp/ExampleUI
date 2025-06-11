@@ -62,6 +62,8 @@ dependencies {
     //Retrofit2
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
     implementation("com.squareup.retrofit2:converter-gson:3.0.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
+
 
     //DaggerHilt
     implementation("com.google.dagger:hilt-android:2.56.1")
@@ -73,5 +75,11 @@ dependencies {
 
     //Navigation
     implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    //Room
+    val room_version = "2.7.1"
+    implementation("androidx.room:room-runtime:$room_version")
+    ksp("androidx.room:room-compiler:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
 
 }

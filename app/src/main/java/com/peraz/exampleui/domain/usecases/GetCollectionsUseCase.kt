@@ -1,7 +1,7 @@
 package com.peraz.exampleui.domain.usecases
 
-import com.peraz.exampleui.data.ApiInterface
-import com.peraz.exampleui.data.CollectionsModel
+import com.peraz.exampleui.data.remote.ApiInterface
+import com.peraz.exampleui.data.remote.ResponseCollectionsModel
 import com.peraz.exampleui.domain.Resource
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -11,7 +11,7 @@ import okio.IOException
 class GetCollectionsUseCase @Inject constructor(
     private val repositoryInterface: ApiInterface
 )  {
-    operator fun invoke(): Flow<Resource<CollectionsModel>> = flow{
+    operator fun invoke(): Flow<Resource<ResponseCollectionsModel>> = flow{
         try {
             emit(Resource.Loading())
             emit(Resource.Success(

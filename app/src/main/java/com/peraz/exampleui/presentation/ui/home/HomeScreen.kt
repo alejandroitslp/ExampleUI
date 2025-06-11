@@ -48,9 +48,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.peraz.exampleui.R
-import com.peraz.exampleui.data.CollectionsModel
-import com.peraz.exampleui.data.RandomCollModel
-import com.peraz.exampleui.data.RetrofitInstance
+import com.peraz.exampleui.data.remote.ResponseCollectionsModel
+import com.peraz.exampleui.data.remote.ResponseColProductModel
+import com.peraz.exampleui.data.remote.RetrofitInstance
 import com.peraz.exampleui.presentation.ui.theme.dark_blue
 import com.peraz.exampleui.presentation.ui.home.components.BottomBar
 import com.peraz.exampleui.presentation.ui.home.components.CardItems
@@ -74,10 +74,12 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ){
 
-    var collections: CollectionsModel? by remember { mutableStateOf(CollectionsModel()) }
+    val collections = remember {viewModel.collections}
+    val randomCol= remember {viewModel.products}
     val context= LocalContext.current
+
     val scope= rememberCoroutineScope()
-    var randomCol: RandomCollModel? by remember{ mutableStateOf(RandomCollModel())}
+
     var isRefreshing by remember {mutableStateOf(false)}
     var estadoColor by remember{ mutableStateOf(false) }
     var backgroundcolor = remember { Animatable(light_blue) }
@@ -93,31 +95,6 @@ fun HomeScreen(
             , animationSpec = tween(6000)
         )
     }
-    LaunchedEffect(key1=true) {
-//        scope.launch(Dispatchers.IO) {
-//            val response = try{
-//                RetrofitInstance.api.getCollections()
-//            }catch(e: IOException){
-//                Toast.makeText(context, "$e" , Toast.LENGTH_LONG).show()
-//                return@launch
-//            }
-//            withContext(Dispatchers.Main) {
-//                collections=response.body()
-//            }
-//        }
-
-        scope.launch(Dispatchers.IO) {
-            val response= try{
-                RetrofitInstance.api.getRandomCollections()
-            }catch(e: IOException){
-                Toast.makeText(context, "$e" , Toast.LENGTH_LONG).show()
-                return@launch
-            }
-            withContext(Dispatchers.Main) {
-                randomCol=response.body()
-            }
-        }
-    }
 
     Scaffold(modifier = Modifier.fillMaxSize(), bottomBar = {
          BottomBar()
@@ -132,15 +109,20 @@ fun HomeScreen(
                     delay(2000)
                     isRefreshing = false
                 }
-                getCollections(scope=scope, context=context) {
-                    collectionsfun->
-                    collections=collectionsfun
-                }
 
-                getRandomCol(scope=scope, context= context){
-                    random->
-                    randomCol=random
-                }
+                viewModel.refreshCollections()
+
+//                getCollections(scope=scope, context=context) {
+//                    collectionsfun->
+//                    collections=collectionsfun
+//                }
+
+                viewModel.refreshProducts()
+
+//                getRandomCol(scope=scope, context= context){
+//                    random->
+//                    randomCol=random
+//                }
             }
         ) {
             Column(
@@ -219,18 +201,18 @@ fun HomeScreen(
                         .padding(top = 20.dp)
                         .fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                         LazyRow(horizontalArrangement =  Arrangement.Center) {
-                            items(collections?.resultado?.size ?: 0) { index ->
+                            items(collections?.size ?: 0) { index ->
 
                                 CollectionItems(
-                                    collectioName = collections?.resultado?.get(index)?.nombre,
-                                    image = "${collections?.resultado?.get(index)?.image}",
+                                    collectioName = collections?.get(index)?.nombre,
+                                    image = "${collections?.get(index)?.localImagePath}",
                                     onClick = {
-                                        collectionFromId->
-                                        randomCol=collectionFromId
+                                        fromId->
+                                        viewModel.refreshProducts(fromId)
                                     },
                                     scope = scope,
                                     context = context,
-                                    id = collections?.resultado?.get(index)?.id
+                                    id = collections?.get(index)?.id
                                 )
                             }
                         }
@@ -260,9 +242,9 @@ fun HomeScreen(
                             .weight(1f)
                             .padding(end = 18.dp)){
                             var textoColeccion: String=""
-                            Log.d("HomeScreenTitle", "${ randomCol?.randomCol?.size }")
-                            if(randomCol?.randomCol?.size!=null && randomCol?.randomCol?.size!=0){
-                                textoColeccion=randomCol?.randomCol?.get(0)?.name.toString()
+                            Log.d("HomeScreenTitle", "${ randomCol?.size }")
+                            if(randomCol?.size!=null && randomCol?.size!=0){
+                                textoColeccion=randomCol?.get(0)?.nameCollection.toString()
                             }
                             else{
                                 textoColeccion="Sin Coleccion"
@@ -279,20 +261,20 @@ fun HomeScreen(
                         }
                     }
                     LazyRow(modifier=Modifier.padding(top = 15.dp)) {
-                        items(randomCol?.randomCol?.size ?: 0){
+                        items(randomCol?.size ?: 0){
                                 item->
                             var randomizer= (1..3).random()
-                            if (randomCol?.randomCol?.get(item)?.image!=null){
-                                if (randomCol?.randomCol?.get(item)?.desc==null){
-                                    CardItems(image= randomCol?.randomCol?.get(item)?.image, desc= "Aun no existe una descripcion para este producto, porfavor modifique la descripcion en la pagina web")
+                            if (randomCol?.get(item)?.localimagepath!=null){
+                                if (randomCol?.get(item)?.desc==null){
+                                    CardItems(image= "${randomCol?.get(item)?.localimagepath}", desc= "Aun no existe una descripcion para este producto, porfavor modifique la descripcion en la pagina web")
 
                                 }
                                 else{
-                                CardItems(image= randomCol?.randomCol?.get(item)?.image, desc= randomCol?.randomCol?.get(item)?.desc.toString())
+                                CardItems(image= randomCol?.get(item)?.localimagepath, desc= randomCol?.get(item)?.desc.toString())
                                 }
                             }
                             else{
-                                CardItems(image= "R.drawable.abrazaditos", desc= randomCol?.randomCol?.get(item)?.desc.toString())
+                                CardItems(image= "R.drawable.abrazaditos", desc= randomCol?.get(item)?.desc.toString())
                             }
                         }
                     }
@@ -306,43 +288,43 @@ fun HomeScreen(
 
 
 
-fun getCollections(
-    scope: CoroutineScope,
-    context: Context,
-    collection: (CollectionsModel?) -> Unit
-){
-    scope.launch(Dispatchers.IO) {
-        val response = try{
-            RetrofitInstance.api.getCollections()
-        }catch(e: IOException){
-            Toast.makeText(context, "$e" , Toast.LENGTH_LONG).show()
-            return@launch
-        }
-        withContext(Dispatchers.Main) {
-            collection(response.body())
-        }
-    }
-}
+//fun getCollections(
+//    scope: CoroutineScope,
+//    context: Context,
+//    collection: (ResponseCollectionsModel?) -> Unit
+//){
+//    scope.launch(Dispatchers.IO) {
+//        val response = try{
+//            RetrofitInstance.api.getCollections()
+//        }catch(e: IOException){
+//            Toast.makeText(context, "$e" , Toast.LENGTH_LONG).show()
+//            return@launch
+//        }
+//        withContext(Dispatchers.Main) {
+//            collection(response.body())
+//        }
+//    }
+//}
 
 
 
-fun getRandomCol(
-    scope: CoroutineScope,
-    context: Context,
-    random: (RandomCollModel?) -> Unit
-){
-    scope.launch(Dispatchers.IO) {
-        val response= try{
-            RetrofitInstance.api.getRandomCollections()
-        }catch(e: IOException){
-            Toast.makeText(context, "$e" , Toast.LENGTH_LONG).show()
-            return@launch
-        }
-        withContext(Dispatchers.Main) {
-            random( response.body() )
-        }
-    }
-}
+//fun getRandomCol(
+//    scope: CoroutineScope,
+//    context: Context,
+//    random: (ResponseColProductModel?) -> Unit
+//){
+//    scope.launch(Dispatchers.IO) {
+//        val response= try{
+//            RetrofitInstance.api.getRandomCollections()
+//        }catch(e: IOException){
+//            Toast.makeText(context, "$e" , Toast.LENGTH_LONG).show()
+//            return@launch
+//        }
+//        withContext(Dispatchers.Main) {
+//            random( response.body() )
+//        }
+//    }
+//}
 
 @Preview
 @Composable

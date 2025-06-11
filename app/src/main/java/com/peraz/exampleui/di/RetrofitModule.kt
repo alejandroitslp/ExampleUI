@@ -1,12 +1,12 @@
 package com.peraz.exampleui.di
 
-import com.peraz.exampleui.data.ApiInterface
-import com.peraz.exampleui.data.RetrofitInstance.getUnsafeOkHttpClient
-import com.peraz.exampleui.data.Util
+import com.peraz.exampleui.data.remote.ApiInterface
+import com.peraz.exampleui.data.remote.RetrofitInstance.getUnsafeOkHttpClient
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
