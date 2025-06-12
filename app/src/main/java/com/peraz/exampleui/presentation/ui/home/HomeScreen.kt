@@ -16,8 +16,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -40,6 +42,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -75,7 +78,8 @@ fun HomeScreen(
 ){
 
     val collections = remember {viewModel.collections}
-    val randomCol= remember {viewModel.products}
+    val randomCol= remember { viewModel.products }
+    var estado = remember { viewModel.estado}
     val context= LocalContext.current
 
     val scope= rememberCoroutineScope()
@@ -96,6 +100,7 @@ fun HomeScreen(
         )
     }
 
+
     Scaffold(modifier = Modifier.fillMaxSize(), bottomBar = {
          BottomBar()
     }) {
@@ -110,14 +115,14 @@ fun HomeScreen(
                     isRefreshing = false
                 }
 
-                viewModel.refreshCollections()
+                viewModel.refreshCollectionsDao()
 
 //                getCollections(scope=scope, context=context) {
 //                    collectionsfun->
 //                    collections=collectionsfun
 //                }
-
-                viewModel.refreshProducts()
+                var randomizer= (1..collections.size).random()
+                viewModel.refreshProductsDao(randomizer)
 
 //                getRandomCol(scope=scope, context= context){
 //                    random->
@@ -201,20 +206,33 @@ fun HomeScreen(
                         .padding(top = 20.dp)
                         .fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                         LazyRow(horizontalArrangement =  Arrangement.Center) {
-                            items(collections?.size ?: 0) { index ->
+                            if (estado.value==false){
+                                items(1) { index ->
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(90.dp).padding(16.dp),
+                                        color = light_blue,
+                                        strokeWidth = 8.dp,
+                                        trackColor = Color.LightGray,
+                                        strokeCap = StrokeCap.Round
+                                    )
+                                }
+                            }else{
+                                items(collections?.size ?: 0) { index ->
 
-                                CollectionItems(
-                                    collectioName = collections?.get(index)?.nombre,
-                                    image = "${collections?.get(index)?.localImagePath}",
-                                    onClick = {
-                                        fromId->
-                                        viewModel.refreshProducts(fromId)
-                                    },
-                                    scope = scope,
-                                    context = context,
-                                    id = collections?.get(index)?.id
-                                )
+                                    CollectionItems(
+                                        collectioName = collections?.get(index)?.nombre,
+                                        image = "${collections?.get(index)?.localImagePath}",
+                                        onClick = {
+                                                fromId->
+                                            viewModel.refreshProductsDao(fromId)
+                                        },
+                                        scope = scope,
+                                        context = context,
+                                        id = collections?.get(index)?.id
+                                    )
+                                }
                             }
+
                         }
                     }
 
@@ -263,10 +281,9 @@ fun HomeScreen(
                     LazyRow(modifier=Modifier.padding(top = 15.dp)) {
                         items(randomCol?.size ?: 0){
                                 item->
-                            var randomizer= (1..3).random()
                             if (randomCol?.get(item)?.localimagepath!=null){
                                 if (randomCol?.get(item)?.desc==null){
-                                    CardItems(image= "${randomCol?.get(item)?.localimagepath}", desc= "Aun no existe una descripcion para este producto, porfavor modifique la descripcion en la pagina web")
+                                    CardItems(image= "${randomCol?.get(item)?.localimagepath}", desc= randomCol.get(item).name)
 
                                 }
                                 else{

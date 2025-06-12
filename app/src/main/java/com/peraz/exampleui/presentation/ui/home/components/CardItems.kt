@@ -40,7 +40,7 @@ fun CardItems(
         }
         Column(modifier=Modifier.weight(.4f).background(color = Color.White)) {
             Text(text = desc.toString(),
-                textAlign = TextAlign.Center, color = dark_blue, modifier= Modifier.padding(start = 5.dp, end = 5.dp).verticalScroll(state = rememberScrollState(),enabled = true))
+                textAlign = TextAlign.Center, color = dark_blue, modifier= Modifier.padding(start = 5.dp, end = 5.dp, top = 5.dp).verticalScroll(state = rememberScrollState(),enabled = true).fillMaxWidth())
         }
     }
 }

@@ -12,9 +12,6 @@ interface ApiInterface {
 
 
     //Obtienen los productos de determinadas colecciones
-    @GET("/api/randomProducts")
-    suspend fun getRandomProducts(): Response<ResponseColProductModel>
-
-    @GET("/api/collections/{id}")
-    suspend fun getSpecificCollectionProducts(@Path("id") searchById: Int? ): Response<ResponseColProductModel>
+    @GET("/api/products")
+    suspend fun getProducts(): Response<ResponseColProductModel>
 }

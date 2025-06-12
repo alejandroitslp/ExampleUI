@@ -29,15 +29,12 @@ class ProductRepository @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val apiInterface: ApiInterface
 ){
-    suspend fun refreshProducts(id: Int?){
+    suspend fun refreshProducts(): List<ProductsEntity>?{
         try{
             var auxlistofproducts= mutableListOf<ColProductModel>()
             val apiProducts: List<ColProductModel>?
-            if(id!=null){
-                apiProducts = apiInterface.getSpecificCollectionProducts(id).body()?.products
-            }else{
-                apiProducts = apiInterface.getRandomProducts().body()?.products
-            }
+
+            apiProducts = apiInterface.getProducts().body()?.products
 
             //Obtiene la lista de colecciones desde internet
             if (!apiProducts.isNullOrEmpty()){
@@ -71,10 +68,14 @@ class ProductRepository @Inject constructor(
             //Convierte las colecciones obtenidas de internet a un EntityLIst(DB)
             productsDao.insertProduct(productsEntities!!)
             //Actualiza la base de datos si es que hay una.
+
+            return productsEntities
+
         }catch(e: Exception)
         {
             Log.d("ProductRepository", "${e.message}")
         }
+        return null
     }
 
     private suspend fun downloadAndSaveImage(

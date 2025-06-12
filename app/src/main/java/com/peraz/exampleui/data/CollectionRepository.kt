@@ -25,7 +25,7 @@ class CollectionRepository @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val apiInterface: ApiInterface
     ) {
-    suspend fun refreshCollection(){
+    suspend fun refreshCollection(): List<CollectionsEntity>?{
         try{
             var auxlistofcollections= mutableListOf<CollectionsModel>()
             val apiCollections = apiInterface.getCollections().body()?.resultado
@@ -55,10 +55,13 @@ class CollectionRepository @Inject constructor(
             //Convierte las colecciones obtenidas de internet a un EntityLIst(DB)
             collectionsDao.insertCollections(collectionsEntities!!)
             //Actualiza la base de datos si es que hay una.
+
+            return collectionsEntities
         }catch(e: Exception)
         {
             Log.d("CollectionRepository", "${e.message}")
         }
+        return null
     }
 
     private suspend fun downloadAndSaveImage(
