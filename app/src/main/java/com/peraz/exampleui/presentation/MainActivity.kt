@@ -50,5 +50,4 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppPreview(){
-    HomeScreen(modifier = Modifier)
 }

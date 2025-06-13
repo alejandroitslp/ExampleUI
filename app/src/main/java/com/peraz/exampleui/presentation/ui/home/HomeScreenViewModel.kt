@@ -34,7 +34,7 @@ class HomeScreenViewModel @Inject constructor(
 ) : ViewModel() {
     var collections = mutableStateListOf<CollectionsModel>()
     var products = mutableStateListOf<ColProductModel>()
-    var estado= mutableStateOf(false)
+    var isLoading= mutableStateOf(false)
 
     init {
 
@@ -43,11 +43,11 @@ class HomeScreenViewModel @Inject constructor(
                 getCollectionsUseCase.invoke().collect {
                         response->
                     if (response is Resource.Success){
-                        estado.value=true
+                        isLoading.value=true
                         refreshCollectionsDao()
                     }
                     if (response is Resource.Loading){
-                       estado.value=false
+                       isLoading.value=false
                     }
                 }
             }catch(e: IOException){

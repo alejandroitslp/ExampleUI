@@ -29,12 +29,10 @@ import com.peraz.exampleui.presentation.ui.theme.dark_blue
 fun CardItems(
     desc: String? = null,
     image: String?= null,
+    modifier: Modifier
 ) {
     Card(border = BorderStroke(width = .1.dp, color = Color.Black),
-        modifier = Modifier.width(250.dp).height(270.dp).padding(15.dp)
-            .clickable{
-
-            }) {
+        modifier = modifier.width(250.dp).height(270.dp).padding(15.dp)) {
         Column(modifier=Modifier.weight(.8f)) {
             Image(painter = rememberAsyncImagePainter(image), contentDescription = null, modifier = Modifier.fillMaxWidth())
         }

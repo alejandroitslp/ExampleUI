@@ -1,8 +1,6 @@
 package com.peraz.exampleui.presentation.ui.home
 
-import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -12,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
@@ -31,6 +32,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,10 +52,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.rememberAsyncImagePainter
 import com.peraz.exampleui.R
-import com.peraz.exampleui.data.remote.ResponseCollectionsModel
-import com.peraz.exampleui.data.remote.ResponseColProductModel
-import com.peraz.exampleui.data.remote.RetrofitInstance
 import com.peraz.exampleui.presentation.ui.theme.dark_blue
 import com.peraz.exampleui.presentation.ui.home.components.BottomBar
 import com.peraz.exampleui.presentation.ui.home.components.CardItems
@@ -62,51 +62,48 @@ import com.peraz.exampleui.presentation.ui.home.components.CollectionItems
 import com.peraz.exampleui.presentation.ui.theme.light_blue
 import com.peraz.exampleui.presentation.ui.theme.pink_light
 import com.peraz.exampleui.presentation.ui.theme.searchbar
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.io.IOException
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel(),
-    modifier: Modifier = Modifier
-){
+) {
 
-    val collections = remember {viewModel.collections}
-    val randomCol= remember { viewModel.products }
-    var estado = remember { viewModel.estado}
-    val context= LocalContext.current
+    var itemFromCard = remember { 0 }
+    var imageFromCard = remember{ "" }
+    var priceFromCard = remember { "" }
+    var stockFromCard = remember { "" }
+    val collections = remember { viewModel.collections }
+    val randomCol = remember { viewModel.products }
+    var isLoading = remember { viewModel.isLoading }
+    val context = LocalContext.current
 
-    val scope= rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
-    var isRefreshing by remember {mutableStateOf(false)}
-    var estadoColor by remember{ mutableStateOf(false) }
+    var isRefreshing by remember { mutableStateOf(false) }
+    var estadoColor by remember { mutableStateOf(false) }
     var backgroundcolor = remember { Animatable(light_blue) }
+    val mostrarImagen =remember {mutableStateOf(false)}
 
-    LaunchedEffect(estadoColor){
+    LaunchedEffect(estadoColor) {
         backgroundcolor.animateTo(
-            if(estadoColor){
+            if (estadoColor) {
                 pink_light
-            }
-            else{
+            } else {
                 dark_blue
-            }
-            , animationSpec = tween(6000)
+            }, animationSpec = tween(6000)
         )
     }
 
 
     Scaffold(modifier = Modifier.fillMaxSize(), bottomBar = {
-         BottomBar()
-    }) {
-        padding->
+        BottomBar()
+    }) { padding ->
         PullToRefreshBox(
-            isRefreshing= isRefreshing,
+            isRefreshing = isRefreshing,
             state = PullToRefreshState(),
             onRefresh = {
                 scope.launch {
@@ -117,17 +114,10 @@ fun HomeScreen(
 
                 viewModel.refreshCollectionsDao()
 
-//                getCollections(scope=scope, context=context) {
-//                    collectionsfun->
-//                    collections=collectionsfun
-//                }
-                var randomizer= (1..collections.size).random()
+                var randomizer = (1..collections.size).random()
                 viewModel.refreshProductsDao(randomizer)
 
-//                getRandomCol(scope=scope, context= context){
-//                    random->
-//                    randomCol=random
-//                }
+
             }
         ) {
             Column(
@@ -137,6 +127,33 @@ fun HomeScreen(
                     .fillMaxSize()
                     .border(width = 5.dp, color = Color.Black)
             ) {
+                if (mostrarImagen.value){
+                    AlertDialog(
+                        containerColor = Color.Black,
+                        modifier = Modifier.fillMaxWidth().height(500.dp),
+                        onDismissRequest = {},
+                        title = {
+                            Text(text = randomCol[itemFromCard].name)
+                                },
+                        text = {
+                            Column {
+                                Text(text = "Precio: $${priceFromCard} MxN")
+                                Text(text = "Stock: ${stockFromCard}")
+                                Spacer(modifier = Modifier.height(5.dp))
+                                Image(modifier = Modifier.fillMaxSize(), painter = rememberAsyncImagePainter(imageFromCard), contentDescription = null)
+
+                            }
+                               },
+                        confirmButton = {},
+                        dismissButton = {
+                            Button(onClick = {
+                                mostrarImagen.value=false
+                            }) {
+                                Text(text = "Cerrar")
+                            }
+                            }
+                    )
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -156,22 +173,26 @@ fun HomeScreen(
                                 sweepAngle = 180f,  // Sweep 180 degrees clockwise to the left (9 o'clock)
                                 useCenter = false,  // Don't connect to the center for a clean arc
 //                            topLeft = Offset(0f, 800f), // Position the top of the bounding box
-                                topLeft = Offset(0f, rectheight/1.37f), // Position the top of the bounding box
+                                topLeft = Offset(
+                                    0f,
+                                    rectheight / 1.37f
+                                ), // Position the top of the bounding box
                                 // so the top half is visible
-                                size = Size(width, height/1.4f) // Full width, twice the height
+                                size = Size(width, height / 1.4f) // Full width, twice the height
                             )
                         }
                         .weight(.5f)
                 ) {
-                    Column(modifier = Modifier
-                        .padding(top = 40.dp)
-                        .weight(.7f))
-                        {
+                    Column(
+                        modifier = Modifier
+                            .padding(top = 40.dp)
+                            .weight(.7f)
+                    )
+                    {
                         CircleProfilePicture(name = "Alejandro", navigateMenu = {
 
-                        }, onClick = {
-                            isAnimatable->
-                            estadoColor=isAnimatable
+                        }, onClick = { isAnimatable ->
+                            estadoColor = isAnimatable
                         })
                     }
                     Column(
@@ -186,49 +207,73 @@ fun HomeScreen(
                             fontSize = 23.sp,
                             modifier = Modifier.width(350.dp)
                         )
-                        SearchBar(inputField = {
+                        SearchBar(
+                            inputField = {
                             var oltxtfield by remember { mutableStateOf("") }
-                            OutlinedTextField(value = oltxtfield, onValueChange = { oltxtfield=it}, placeholder = {
-                                Row(verticalAlignment = Alignment.CenterVertically){
-                                    Image(painter = painterResource(R.drawable.zoomfilled), contentDescription = null)
-                                    Text(text = "Busca tu coleccion!", fontSize = 20.sp, color = Color.White, fontWeight = FontWeight.Light)
-                                }
-                            }, colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = Color.Transparent, focusedBorderColor = Color.Transparent))
-                        }, expanded = false, onExpandedChange = {}, colors = SearchBarDefaults.colors(containerColor = searchbar),
-                            modifier=Modifier
+                            OutlinedTextField(
+                                value = oltxtfield,
+                                onValueChange = { oltxtfield = it },
+                                placeholder = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Image(
+                                            painter = painterResource(R.drawable.zoomfilled),
+                                            contentDescription = null
+                                        )
+                                        Text(
+                                            text = "Busca tu coleccion!",
+                                            fontSize = 20.sp,
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Light
+                                        )
+                                    }
+                                },
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    unfocusedBorderColor = Color.Transparent,
+                                    focusedBorderColor = Color.Transparent
+                                )
+                            )
+                        },
+                            expanded = false,
+                            onExpandedChange = {},
+                            colors = SearchBarDefaults.colors(containerColor = searchbar),
+                            modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 14.dp, vertical = 3.dp)
-                                .height(55.dp)) { }
+                                .height(55.dp)
+                        ) { }
 
                     }
-                    Column(modifier = Modifier
-                        .weight(1f)
-                        .padding(top = 20.dp)
-                        .fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                        LazyRow(horizontalArrangement =  Arrangement.Center) {
-                            if (estado.value==false){
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(top = 20.dp)
+                            .fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        LazyRow(horizontalArrangement = Arrangement.Center) {
+                            if (isLoading.value == false) {
                                 items(1) { index ->
                                     CircularProgressIndicator(
-                                        modifier = Modifier.size(90.dp).padding(16.dp),
+                                        modifier = Modifier
+                                            .size(90.dp)
+                                            .padding(16.dp),
                                         color = light_blue,
                                         strokeWidth = 8.dp,
                                         trackColor = Color.LightGray,
                                         strokeCap = StrokeCap.Round
                                     )
                                 }
-                            }else{
-                                items(collections?.size ?: 0) { index ->
+                            } else {
+                                items(collections.size) { index ->
 
                                     CollectionItems(
-                                        collectioName = collections?.get(index)?.nombre,
-                                        image = "${collections?.get(index)?.localImagePath}",
-                                        onClick = {
-                                                fromId->
+                                        collectioName = collections[index].nombre,
+                                        image = "${collections[index].localImagePath}",
+                                        onClick = { fromId ->
                                             viewModel.refreshProductsDao(fromId)
                                         },
                                         scope = scope,
                                         context = context,
-                                        id = collections?.get(index)?.id
+                                        id = collections[index].id
                                     )
                                 }
                             }
@@ -247,51 +292,78 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Row(modifier=Modifier.fillMaxWidth()){
-                        Column(horizontalAlignment = Alignment.Start, modifier=Modifier
-                            .weight(1f)
-                            .padding(start = 18.dp)
-                            .clickable {
-
-                            }){
-                            Text(text = "Trend", fontWeight = FontWeight.Bold, color = dark_blue)
-                        }
-                        Column( horizontalAlignment = Alignment.CenterHorizontally ,modifier= Modifier
-                            .weight(1f)
-                            .padding(end = 18.dp)){
-                            var textoColeccion: String=""
-                            Log.d("HomeScreenTitle", "${ randomCol?.size }")
-                            if(randomCol?.size!=null && randomCol?.size!=0){
-                                textoColeccion=randomCol?.get(0)?.nameCollection.toString()
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 18.dp)
+                        ) {
+                            var textoColeccion = ""
+                            Log.d("HomeScreenTitle", "${randomCol.size}")
+                            if (randomCol.isNotEmpty()) {
+                                textoColeccion = randomCol[0].nameCollection.toString()
+                            } else {
+                                textoColeccion = "Sin Coleccion"
                             }
-                            else{
-                                textoColeccion="Sin Coleccion"
-                            }
-                            Text(text = textoColeccion, color= dark_blue, fontWeight = FontWeight.ExtraBold)
+                            Text(
+                                text = textoColeccion,
+                                color = dark_blue,
+                                fontWeight = FontWeight.ExtraBold
+                            )
                         }
-                        Column(horizontalAlignment = Alignment.End, modifier= Modifier
-                            .weight(1f)
-                            .padding(end = 18.dp)
-                            .clickable {
+                        Column(
+                            horizontalAlignment = Alignment.End, modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 18.dp)
+                                .clickable {
 
-                            }){
-                            Text(text = "View details", color= dark_blue)
+                                }) {
+                            Text(text = "Ver detalles", color = dark_blue)
                         }
                     }
-                    LazyRow(modifier=Modifier.padding(top = 15.dp)) {
-                        items(randomCol?.size ?: 0){
-                                item->
-                            if (randomCol?.get(item)?.localimagepath!=null){
-                                if (randomCol?.get(item)?.desc==null){
-                                    CardItems(image= "${randomCol?.get(item)?.localimagepath}", desc= randomCol.get(item).name)
+                    LazyRow(modifier = Modifier.padding(top = 15.dp)) {
+                        items(randomCol.size) { item ->
+                            if (randomCol[item].localimagepath != null) {
+                                if (randomCol[item].desc == null) {
+                                    CardItems(
+                                        image = "${randomCol[item].localimagepath}",
+                                        desc = randomCol[item].name,
+                                        modifier = Modifier.clickable{
+                                            itemFromCard=item
+                                            imageFromCard=randomCol[item].localimagepath ?: ""
+                                            priceFromCard = randomCol[item].price ?: ""
+                                            stockFromCard = randomCol[item].stock.toString() ?: ""
+                                            mostrarImagen.value=true
+                                        }
+                                    )
 
+                                } else {
+                                    CardItems(
+                                        image = randomCol[item].localimagepath,
+                                        desc = randomCol[item].desc.toString(),
+                                        modifier = Modifier.clickable{
+                                            itemFromCard=item
+                                            imageFromCard=randomCol[item].localimagepath ?: ""
+                                            priceFromCard = randomCol[item].price ?: ""
+                                            stockFromCard = randomCol[item].stock.toString() ?: ""
+                                            mostrarImagen.value=true
+
+                                            Log.d("BoleanoHomeScreen","${mostrarImagen.value}")
+                                        }
+                                    )
                                 }
-                                else{
-                                CardItems(image= randomCol?.get(item)?.localimagepath, desc= randomCol?.get(item)?.desc.toString())
-                                }
-                            }
-                            else{
-                                CardItems(image= "R.drawable.abrazaditos", desc= randomCol?.get(item)?.desc.toString())
+                            } else {
+                                CardItems(
+                                    image = "R.drawable.abrazaditos",
+                                    desc = randomCol[item].desc.toString(),
+                                    modifier = Modifier.clickable{
+                                        itemFromCard=item
+                                        imageFromCard=randomCol[item].localimagepath ?: ""
+                                        priceFromCard = randomCol[item].price ?: ""
+                                        stockFromCard = randomCol[item].stock.toString() ?: ""
+                                        mostrarImagen.value=true
+                                    }
+                                )
                             }
                         }
                     }
@@ -304,47 +376,8 @@ fun HomeScreen(
 }
 
 
-
-//fun getCollections(
-//    scope: CoroutineScope,
-//    context: Context,
-//    collection: (ResponseCollectionsModel?) -> Unit
-//){
-//    scope.launch(Dispatchers.IO) {
-//        val response = try{
-//            RetrofitInstance.api.getCollections()
-//        }catch(e: IOException){
-//            Toast.makeText(context, "$e" , Toast.LENGTH_LONG).show()
-//            return@launch
-//        }
-//        withContext(Dispatchers.Main) {
-//            collection(response.body())
-//        }
-//    }
-//}
-
-
-
-//fun getRandomCol(
-//    scope: CoroutineScope,
-//    context: Context,
-//    random: (ResponseColProductModel?) -> Unit
-//){
-//    scope.launch(Dispatchers.IO) {
-//        val response= try{
-//            RetrofitInstance.api.getRandomCollections()
-//        }catch(e: IOException){
-//            Toast.makeText(context, "$e" , Toast.LENGTH_LONG).show()
-//            return@launch
-//        }
-//        withContext(Dispatchers.Main) {
-//            random( response.body() )
-//        }
-//    }
-//}
-
 @Preview
 @Composable
-fun HomeScreenPreview(){
+fun HomeScreenPreview() {
     HomeScreen()
 }
