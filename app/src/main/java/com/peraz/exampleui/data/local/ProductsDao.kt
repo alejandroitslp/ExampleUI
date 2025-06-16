@@ -12,6 +12,9 @@ interface ProductsDao {
     fun getAllProducts(): List<ProductsEntity>
     //Se observan cambios con Flow
 
+    @Query("Delete From products Where id = :productId")
+    suspend fun deleteProductById(productId: Int)
+
     @Query("Delete From products")
     suspend fun deleteAllProducts()
 

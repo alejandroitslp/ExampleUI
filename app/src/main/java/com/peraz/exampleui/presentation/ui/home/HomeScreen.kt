@@ -52,6 +52,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.peraz.exampleui.R
 import com.peraz.exampleui.presentation.ui.theme.dark_blue
@@ -73,9 +74,6 @@ fun HomeScreen(
 ) {
 
     var itemFromCard = remember { 0 }
-    var imageFromCard = remember{ "" }
-    var priceFromCard = remember { "" }
-    var stockFromCard = remember { "" }
     val collections = remember { viewModel.collections }
     val randomCol = remember { viewModel.products }
     var isLoading = remember { viewModel.isLoading }
@@ -137,11 +135,15 @@ fun HomeScreen(
                                 },
                         text = {
                             Column {
-                                Text(text = "Precio: $${priceFromCard} MxN")
-                                Text(text = "Stock: ${stockFromCard}")
+                                Text(text = "Precio: $${randomCol[itemFromCard].price} MxN")
+                                Text(text = "Stock: ${randomCol[itemFromCard].stock}")
                                 Spacer(modifier = Modifier.height(5.dp))
-                                Image(modifier = Modifier.fillMaxSize(), painter = rememberAsyncImagePainter(imageFromCard), contentDescription = null)
-
+                                LazyRow(modifier = Modifier.fillMaxSize()) {
+                                    items(randomCol[itemFromCard].localimagepath.size) {
+                                        index->
+                                        AsyncImage(modifier= Modifier.fillParentMaxWidth(), model = randomCol[itemFromCard].localimagepath[index], contentDescription = null)
+                                    }
+                                }
                             }
                                },
                         confirmButton = {},
@@ -326,26 +328,22 @@ fun HomeScreen(
                             if (randomCol[item].localimagepath != null) {
                                 if (randomCol[item].desc == null) {
                                     CardItems(
-                                        image = "${randomCol[item].localimagepath}",
+                                        image = "${randomCol[item].localimagepath[0]}",
                                         desc = randomCol[item].name,
                                         modifier = Modifier.clickable{
                                             itemFromCard=item
-                                            imageFromCard=randomCol[item].localimagepath ?: ""
-                                            priceFromCard = randomCol[item].price ?: ""
-                                            stockFromCard = randomCol[item].stock.toString() ?: ""
+//
                                             mostrarImagen.value=true
                                         }
                                     )
 
                                 } else {
                                     CardItems(
-                                        image = randomCol[item].localimagepath,
+                                        image = randomCol[item].localimagepath[0],
                                         desc = randomCol[item].desc.toString(),
                                         modifier = Modifier.clickable{
                                             itemFromCard=item
-                                            imageFromCard=randomCol[item].localimagepath ?: ""
-                                            priceFromCard = randomCol[item].price ?: ""
-                                            stockFromCard = randomCol[item].stock.toString() ?: ""
+
                                             mostrarImagen.value=true
 
                                             Log.d("BoleanoHomeScreen","${mostrarImagen.value}")
@@ -358,9 +356,6 @@ fun HomeScreen(
                                     desc = randomCol[item].desc.toString(),
                                     modifier = Modifier.clickable{
                                         itemFromCard=item
-                                        imageFromCard=randomCol[item].localimagepath ?: ""
-                                        priceFromCard = randomCol[item].price ?: ""
-                                        stockFromCard = randomCol[item].stock.toString() ?: ""
                                         mostrarImagen.value=true
                                     }
                                 )

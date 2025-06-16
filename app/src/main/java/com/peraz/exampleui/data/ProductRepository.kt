@@ -2,19 +2,13 @@ package com.peraz.exampleui.data
 
 import android.content.Context
 import android.util.Log
-import androidx.annotation.RestrictTo
-import androidx.compose.runtime.rememberCoroutineScope
-import com.peraz.exampleui.data.local.CollectionsEntity
 import com.peraz.exampleui.data.local.ProductsDao
 import com.peraz.exampleui.data.local.ProductsEntity
 import com.peraz.exampleui.data.remote.ApiInterface
 import com.peraz.exampleui.data.remote.ColProductModel
-import com.peraz.exampleui.data.remote.CollectionsModel
-import com.peraz.exampleui.data.remote.toCollectionsEntityList
 import com.peraz.exampleui.data.remote.toProductsEntityList
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -36,22 +30,26 @@ class ProductRepository @Inject constructor(
 
             apiProducts = apiInterface.getProducts().body()?.products
 
-            //Obtiene la lista de colecciones desde internet
+            //Obtiene la lista de productos desde internet
             if (!apiProducts.isNullOrEmpty()){
-                for(imageProduct in apiProducts){ //por cada coleccion va a recolectar las imagenes
 
+                for(imageProduct in apiProducts){ //por cada producto va a recolectar las imagenes
 
                     val imageId = imageProduct.id
-                    val imageUrl = imageProduct.image
-                    var localImagePath: String? = null
+                    val imageUrl = imageProduct.images
+                    var localImagePath= mutableListOf<String?>()
+                    var counter=1
+                    for (image in imageProduct.images){
 
-
-                    if (imageUrl.isNotBlank() && imageId !=null){
-                        localImagePath=downloadAndSaveImage(
-                            context= context,
-                            imageUrl= imageUrl,
-                            fileName= "product_image_$imageId.jpg"
-                        )
+                        if (image!!.isNotBlank() && imageId !=null){
+                            localImagePath.add( downloadAndSaveImage(
+                                foldernumber=imageId,
+                                context= context,
+                                imageUrl= image.toString(),
+                                fileName= "product_image_$counter.jpg"
+                            ))
+                            counter++
+                        }
                     }
                     val newProduct=imageProduct.copy(
                         localimagepath = localImagePath
@@ -81,7 +79,8 @@ class ProductRepository @Inject constructor(
     private suspend fun downloadAndSaveImage(
         context: Context,
         imageUrl: String,
-        fileName: String
+        fileName: String,
+        foldernumber: Int
     ): String? {
         return withContext(Dispatchers.IO) {
             try{
@@ -94,7 +93,7 @@ class ProductRepository @Inject constructor(
                 }//Si la respuesta del servidor no es satisfactoria, se sale con error
 
                 response.body?.let { responseBody ->
-                    val storageDir = File(context.filesDir, "image_products")
+                    val storageDir = File(context.filesDir, "image_products_$foldernumber")
                     //Accede al directorio en la carpeta files, ahi se van a guardar en files/image_products
                     if (!storageDir.exists()) {
                         storageDir.mkdirs()
