@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -32,11 +33,11 @@ fun CardItems(
     modifier: Modifier
 ) {
     Card(border = BorderStroke(width = .1.dp, color = Color.Black),
-        modifier = modifier.width(250.dp).height(270.dp).padding(15.dp)) {
+        modifier = modifier.width(170.dp).height(280.dp).padding(10.dp)) {
         Column(modifier=Modifier.weight(.8f)) {
-            Image(painter = rememberAsyncImagePainter(image), contentDescription = null, modifier = Modifier.fillMaxWidth())
+            Image(painter = rememberAsyncImagePainter(image), contentDescription = null, modifier = Modifier.fillMaxWidth(), contentScale = ContentScale.Crop)
         }
-        Column(modifier=Modifier.weight(.4f).background(color = Color.White)) {
+        Column(modifier=Modifier.weight(.3f).background(color = Color.White)) {
             Text(text = desc.toString(),
                 textAlign = TextAlign.Center, color = dark_blue, modifier= Modifier.padding(start = 5.dp, end = 5.dp, top = 5.dp).verticalScroll(state = rememberScrollState(),enabled = true).fillMaxWidth())
         }

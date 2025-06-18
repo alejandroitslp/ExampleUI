@@ -8,13 +8,18 @@ import com.peraz.exampleui.data.remote.ColProductModel
 import com.peraz.exampleui.data.remote.ResponseCollectionsModel
 import com.peraz.exampleui.domain.Resource
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import okio.IOException
 import javax.inject.Inject
 
 class GetAllProductsUseCase @Inject constructor(
     private val productRepository: ProductRepository
     )  {
+        var progress=productRepository.counterProgress
+
         operator fun invoke(): Flow<Resource<List<ProductsEntity>>> = flow{
             try {
                 emit(Resource.Loading())

@@ -9,6 +9,12 @@ import com.peraz.exampleui.data.remote.ColProductModel
 import com.peraz.exampleui.data.remote.toProductsEntityList
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -23,18 +29,26 @@ class ProductRepository @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val apiInterface: ApiInterface
 ){
+    var _counterProgress= MutableSharedFlow<Float>()
+    var counterProgress = _counterProgress.asSharedFlow()
+    var _error = MutableSharedFlow<String?>()
+    val error= _error.asSharedFlow()
+
     suspend fun refreshProducts(): List<ProductsEntity>?{
         try{
-            var auxlistofproducts= mutableListOf<ColProductModel>()
-            val apiProducts: List<ColProductModel>?
+            var auxlistofproducts= mutableListOf<ColProductModel>()//Lista vacia
 
-            apiProducts = apiInterface.getProducts().body()?.products
+
+            val apiProducts = apiInterface.getProducts().body()?.products
 
             //Obtiene la lista de productos desde internet
             if (!apiProducts.isNullOrEmpty()){
+                var sumaFloats= 0f
+                var calculoFloats=100f/apiProducts.size.toFloat()
 
                 for(imageProduct in apiProducts){ //por cada producto va a recolectar las imagenes
 
+                    sumaFloats=(sumaFloats+calculoFloats)
                     val imageId = imageProduct.id
                     val imageUrl = imageProduct.images
                     var localImagePath= mutableListOf<String?>()
@@ -51,10 +65,13 @@ class ProductRepository @Inject constructor(
                             counter++
                         }
                     }
+                    _counterProgress.emit(sumaFloats/100f)
+
                     val newProduct=imageProduct.copy(
                         localimagepath = localImagePath
                     )
                     auxlistofproducts.add(newProduct)
+
 
                     Log.d("ProductoReporisotu","$auxlistofproducts")
 
@@ -72,6 +89,8 @@ class ProductRepository @Inject constructor(
         }catch(e: Exception)
         {
             Log.d("ProductRepository", "${e.message}")
+
+            throw e
         }
         return null
     }

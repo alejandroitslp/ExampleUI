@@ -3,6 +3,8 @@ package com.peraz.exampleui.presentation.ui.home
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,6 +22,12 @@ import com.peraz.exampleui.domain.usecases.GetCollectionsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
@@ -35,9 +43,13 @@ class HomeScreenViewModel @Inject constructor(
     var collections = mutableStateListOf<CollectionsModel>()
     var products = mutableStateListOf<ColProductModel>()
     var isLoading= mutableStateOf(false)
+    var progresBar= mutableFloatStateOf(0f)
+    var _progressBar = getAllProductsUseCase.progress
+    var _error = MutableSharedFlow<String>()
+    val error= _error.asSharedFlow()
+
 
     init {
-
         viewModelScope.launch {
             try {
                 getCollectionsUseCase.invoke().collect {
@@ -47,12 +59,13 @@ class HomeScreenViewModel @Inject constructor(
                         refreshCollectionsDao()
                     }
                     if (response is Resource.Loading){
-                       isLoading.value=false
+                        isLoading.value=false
                     }
                 }
             }catch(e: IOException){
                 Log.d("FallaCollection","$e")
             }
+
         }
 
 
@@ -62,6 +75,20 @@ class HomeScreenViewModel @Inject constructor(
                     response->
                     if (response is Resource.Success){
                         refreshProductsDao(1)
+                    }
+                    if (response is Resource.Loading){
+                        viewModelScope.launch {
+                            _progressBar.collect {
+                                resultado->
+                                progresBar.value=resultado
+                            }
+                        }
+                    }
+                    if (response is Resource.Error){
+                        //Aqui se puede poner la falla de conexion y que envie dato para decir que
+                        //se trabajara con la base de datos local.
+                        refreshProductsDao(1)
+                        _error.emit("${response.message}")
                     }
                 }
             }catch(e: IOException){
@@ -73,14 +100,13 @@ class HomeScreenViewModel @Inject constructor(
 
 
 
-
     }
 
 
     fun refreshProductsDao(
         id: Int? = null,
     ) {
-        viewModelScope.launch(Dispatchers.IO) {
+        var job1=viewModelScope.launch(Dispatchers.IO) {
             if (id != null) {
                 products.clear()
                     productRepository.getSpecificCollectionProducts(id).map {
@@ -94,12 +120,11 @@ class HomeScreenViewModel @Inject constructor(
                         products.add(it.toModel())
                     }
             }
-            return@launch
         }
     }
 
     fun refreshCollectionsDao() {
-        viewModelScope.launch(Dispatchers.IO) {
+        var job2= viewModelScope.launch(Dispatchers.IO) {
             collections.clear()
                 collectionRepository.getCollections().map{
                     it.toModel()
@@ -107,5 +132,6 @@ class HomeScreenViewModel @Inject constructor(
                 }
         }//Dependiendo de all lo que se guardo en la base de datos, regresa la coleccion hecha Modelo.
     }
+
 
 }

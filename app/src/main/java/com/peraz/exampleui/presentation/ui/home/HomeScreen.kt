@@ -1,7 +1,9 @@
 package com.peraz.exampleui.presentation.ui.home
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,10 +22,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
@@ -33,6 +38,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,7 +60,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import coil.util.CoilUtils.result
 import com.peraz.exampleui.R
+import com.peraz.exampleui.data.ProductRepository
 import com.peraz.exampleui.presentation.ui.theme.dark_blue
 import com.peraz.exampleui.presentation.ui.home.components.BottomBar
 import com.peraz.exampleui.presentation.ui.home.components.CardItems
@@ -64,7 +72,10 @@ import com.peraz.exampleui.presentation.ui.theme.light_blue
 import com.peraz.exampleui.presentation.ui.theme.pink_light
 import com.peraz.exampleui.presentation.ui.theme.searchbar
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import net.engawapg.lib.zoomable.rememberZoomState
+import net.engawapg.lib.zoomable.zoomable
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,15 +89,19 @@ fun HomeScreen(
     val randomCol = remember { viewModel.products }
     var isLoading = remember { viewModel.isLoading }
     val context = LocalContext.current
+    val progressBar= viewModel.progresBar
+    var errorConexion= viewModel.error
 
     val scope = rememberCoroutineScope()
 
     var isRefreshing by remember { mutableStateOf(false) }
     var estadoColor by remember { mutableStateOf(false) }
     var backgroundcolor = remember { Animatable(light_blue) }
+    var circleLoadingColor = remember { Animatable(dark_blue) }
     val mostrarImagen =remember {mutableStateOf(false)}
 
     LaunchedEffect(estadoColor) {
+
         backgroundcolor.animateTo(
             if (estadoColor) {
                 pink_light
@@ -94,6 +109,21 @@ fun HomeScreen(
                 dark_blue
             }, animationSpec = tween(6000)
         )
+
+        circleLoadingColor.animateTo(
+            if(estadoColor){
+                light_blue
+            }else{
+                Color.Transparent
+            }
+        )
+    }
+    LaunchedEffect(key1 = true){
+        errorConexion.collect {
+            message->
+            Toast.makeText(context, message,Toast.LENGTH_SHORT).show()
+        }
+
     }
 
 
@@ -141,16 +171,20 @@ fun HomeScreen(
                                 LazyRow(modifier = Modifier.fillMaxSize()) {
                                     items(randomCol[itemFromCard].localimagepath.size) {
                                         index->
-                                        AsyncImage(modifier= Modifier.fillParentMaxWidth(), model = randomCol[itemFromCard].localimagepath[index], contentDescription = null)
+                                        val zoomState = rememberZoomState(initialScale = 1f)
+                                        AsyncImage(modifier= Modifier.fillParentMaxWidth().zoomable(
+                                            zoomState = zoomState
+                                        ), model = randomCol[itemFromCard].localimagepath[index], contentDescription = null)
                                     }
                                 }
                             }
                                },
-                        confirmButton = {},
+                        confirmButton = {
+                        },
                         dismissButton = {
                             Button(onClick = {
                                 mostrarImagen.value=false
-                            }) {
+                            }, colors = ButtonDefaults.buttonColors(containerColor = pink_light)) {
                                 Text(text = "Cerrar")
                             }
                             }
@@ -258,7 +292,7 @@ fun HomeScreen(
                                         modifier = Modifier
                                             .size(90.dp)
                                             .padding(16.dp),
-                                        color = light_blue,
+                                        color = circleLoadingColor.value,
                                         strokeWidth = 8.dp,
                                         trackColor = Color.LightGray,
                                         strokeCap = StrokeCap.Round
@@ -289,8 +323,7 @@ fun HomeScreen(
                     modifier = Modifier
                         .background(color = Color.White)
                         .weight(.5f)
-                        .fillMaxWidth()
-                        .padding(top = 5.dp),
+                        .fillMaxWidth(),
                     verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -323,42 +356,60 @@ fun HomeScreen(
                             Text(text = "Ver detalles", color = dark_blue)
                         }
                     }
-                    LazyRow(modifier = Modifier.padding(top = 15.dp)) {
-                        items(randomCol.size) { item ->
-                            if (randomCol[item].localimagepath != null) {
-                                if (randomCol[item].desc == null) {
-                                    CardItems(
-                                        image = "${randomCol[item].localimagepath[0]}",
-                                        desc = randomCol[item].name,
-                                        modifier = Modifier.clickable{
-                                            itemFromCard=item
-//
-                                            mostrarImagen.value=true
-                                        }
-                                    )
+                    if (randomCol.isNullOrEmpty())
+                    {
+                        Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(20.dp)) {
+                            val animatedProgress = animateFloatAsState(
+                                targetValue = progressBar.floatValue,
+                                animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+                            ).value
 
+                            LinearProgressIndicator(
+                            progress = { animatedProgress },
+                            modifier = Modifier.fillMaxWidth(),
+                            color = dark_blue,
+                            trackColor = light_blue,
+                            )
+                        }
+                    }
+                    else {
+                        LazyRow(modifier = Modifier.padding(top = 15.dp)) {
+                            items(randomCol.size) { item ->
+                                if (randomCol[item].localimagepath != null) {
+                                    if (randomCol[item].desc == null) {
+                                        CardItems(
+                                            image = "${randomCol[item].localimagepath[0]}",
+                                            desc = randomCol[item].name,
+                                            modifier = Modifier.clickable {
+                                                itemFromCard = item
+//
+                                                mostrarImagen.value = true
+                                            }
+                                        )
+
+                                    } else {
+                                        CardItems(
+                                            image = randomCol[item].localimagepath[0],
+                                            desc = randomCol[item].desc.toString(),
+                                            modifier = Modifier.clickable {
+                                                itemFromCard = item
+
+                                                mostrarImagen.value = true
+
+                                                Log.d("BoleanoHomeScreen", "${mostrarImagen.value}")
+                                            }
+                                        )
+                                    }
                                 } else {
                                     CardItems(
-                                        image = randomCol[item].localimagepath[0],
+                                        image = "R.drawable.abrazaditos",
                                         desc = randomCol[item].desc.toString(),
-                                        modifier = Modifier.clickable{
-                                            itemFromCard=item
-
-                                            mostrarImagen.value=true
-
-                                            Log.d("BoleanoHomeScreen","${mostrarImagen.value}")
+                                        modifier = Modifier.clickable {
+                                            itemFromCard = item
+                                            mostrarImagen.value = true
                                         }
                                     )
                                 }
-                            } else {
-                                CardItems(
-                                    image = "R.drawable.abrazaditos",
-                                    desc = randomCol[item].desc.toString(),
-                                    modifier = Modifier.clickable{
-                                        itemFromCard=item
-                                        mostrarImagen.value=true
-                                    }
-                                )
                             }
                         }
                     }
@@ -374,5 +425,4 @@ fun HomeScreen(
 @Preview
 @Composable
 fun HomeScreenPreview() {
-    HomeScreen()
 }
