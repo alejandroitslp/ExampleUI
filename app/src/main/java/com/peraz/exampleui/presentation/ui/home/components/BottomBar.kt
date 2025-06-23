@@ -16,10 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
+
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,16 +43,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.peraz.exampleui.R
 import com.peraz.exampleui.presentation.ui.theme.dark_blue
+import jakarta.inject.Inject
 import kotlin.io.path.moveTo
+import kotlin.math.sin
 
 @Composable
-fun BottomBar(){
+fun BottomBar(
+    sinchronize: ()->Unit
+){
     Row(modifier=Modifier.fillMaxWidth().background(color = Color.White).border(width = 0.3.dp, color=Color.LightGray, shape= RectangleShape), horizontalArrangement = Arrangement.Center) {
         Column(modifier = Modifier.weight(.33f).padding(all = 20.dp).clickable{}) {
             Image(painter = painterResource(R.drawable.home), contentDescription = null, modifier=Modifier.size(30.dp))
             Text(text = "Home", fontSize = 13.sp, color = dark_blue)
         }
-        Column(modifier = Modifier.weight(.33f).padding(15.dp).clickable{}, horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(modifier = Modifier.weight(.33f).padding(15.dp).clickable{
+            sinchronize()
+        }, horizontalAlignment = Alignment.CenterHorizontally) {
             Image(painter = painterResource(R.drawable.arrowsexchangewhite), contentDescription = null, modifier=Modifier.size(50.dp).clip(shape = CircleShape).background(color= dark_blue))
         }
         Column(modifier = Modifier.weight(.33f).padding(all = 20.dp).clickable{}, horizontalAlignment = Alignment.End) {
@@ -72,5 +75,4 @@ fun BottomBar(){
 @Preview
 @Composable
 fun BottomBarPreview(){
-    BottomBar()
 }

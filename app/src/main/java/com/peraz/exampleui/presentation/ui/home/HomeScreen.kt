@@ -1,13 +1,10 @@
 package com.peraz.exampleui.presentation.ui.home
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,19 +23,15 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBar
-import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,27 +45,22 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
-import coil.util.CoilUtils.result
-import com.peraz.exampleui.R
-import com.peraz.exampleui.data.ProductRepository
 import com.peraz.exampleui.presentation.ui.theme.dark_blue
 import com.peraz.exampleui.presentation.ui.home.components.BottomBar
 import com.peraz.exampleui.presentation.ui.home.components.CardItems
 import com.peraz.exampleui.presentation.ui.home.components.CircleProfilePicture
 import com.peraz.exampleui.presentation.ui.home.components.CollectionItems
+import com.peraz.exampleui.presentation.ui.home.components.SearchBarCustom
 import com.peraz.exampleui.presentation.ui.theme.light_blue
 import com.peraz.exampleui.presentation.ui.theme.pink_light
-import com.peraz.exampleui.presentation.ui.theme.searchbar
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import net.engawapg.lib.zoomable.rememberZoomState
 import net.engawapg.lib.zoomable.zoomable
@@ -83,25 +71,25 @@ import net.engawapg.lib.zoomable.zoomable
 fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel(),
 ) {
-
-    var itemFromCard = remember { 0 }
+    var idFromCard = remember { 0 }
     val collections = remember { viewModel.collections }
     val randomCol = remember { viewModel.products }
     var isLoading = remember { viewModel.isLoading }
     val context = LocalContext.current
     val progressBar= viewModel.progresBar
     var errorConexion= viewModel.error
+    var productbyid=viewModel.productById
 
     val scope = rememberCoroutineScope()
+
 
     var isRefreshing by remember { mutableStateOf(false) }
     var estadoColor by remember { mutableStateOf(false) }
     var backgroundcolor = remember { Animatable(light_blue) }
-    var circleLoadingColor = remember { Animatable(dark_blue) }
     val mostrarImagen =remember {mutableStateOf(false)}
+    val snackbarHostState=remember{ SnackbarHostState() }
 
     LaunchedEffect(estadoColor) {
-
         backgroundcolor.animateTo(
             if (estadoColor) {
                 pink_light
@@ -110,26 +98,22 @@ fun HomeScreen(
             }, animationSpec = tween(6000)
         )
 
-        circleLoadingColor.animateTo(
-            if(estadoColor){
-                light_blue
-            }else{
-                Color.Transparent
-            }
-        )
     }
     LaunchedEffect(key1 = true){
+
         errorConexion.collect {
             message->
-            Toast.makeText(context, message,Toast.LENGTH_SHORT).show()
+            snackbarHostState.showSnackbar(message)
         }
 
     }
 
 
     Scaffold(modifier = Modifier.fillMaxSize(), bottomBar = {
-        BottomBar()
-    }) { padding ->
+        BottomBar(sinchronize = {
+            viewModel.getProductsFromRetrofit()
+        })
+    }, snackbarHost= {SnackbarHost(hostState = snackbarHostState)}) { padding ->
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             state = PullToRefreshState(),
@@ -153,7 +137,6 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.Center,
                 modifier = Modifier
                     .fillMaxSize()
-                    .border(width = 5.dp, color = Color.Black)
             ) {
                 if (mostrarImagen.value){
                     AlertDialog(
@@ -161,20 +144,20 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth().height(500.dp),
                         onDismissRequest = {},
                         title = {
-                            Text(text = randomCol[itemFromCard].name)
+                            Text(text = productbyid.first().name)
                                 },
                         text = {
                             Column {
-                                Text(text = "Precio: $${randomCol[itemFromCard].price} MxN")
-                                Text(text = "Stock: ${randomCol[itemFromCard].stock}")
+                                Text(text = "Precio: $${productbyid.first().price} MxN")
+                                Text(text = "Stock: ${productbyid.first().stock}")
                                 Spacer(modifier = Modifier.height(5.dp))
                                 LazyRow(modifier = Modifier.fillMaxSize()) {
-                                    items(randomCol[itemFromCard].localimagepath.size) {
+                                    items(productbyid.first().localimagepath.size) {
                                         index->
                                         val zoomState = rememberZoomState(initialScale = 1f)
                                         AsyncImage(modifier= Modifier.fillParentMaxWidth().zoomable(
                                             zoomState = zoomState
-                                        ), model = randomCol[itemFromCard].localimagepath[index], contentDescription = null)
+                                        ), model = productbyid.first().localimagepath[index], contentDescription = null)
                                     }
                                 }
                             }
@@ -219,66 +202,28 @@ fun HomeScreen(
                         }
                         .weight(.5f)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(top = 40.dp)
-                            .weight(.7f)
-                    )
-                    {
+
                         CircleProfilePicture(name = "Alejandro", navigateMenu = {
 
                         }, onClick = { isAnimatable ->
                             estadoColor = isAnimatable
-                        })
-                    }
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(.8f),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                        }, modifier=Modifier.padding(top=35.dp))
+
+
                         Text(
                             text = "Encuentra tu coleccion favorita aqui!",
                             color = Color.White,
                             fontSize = 23.sp,
-                            modifier = Modifier.width(350.dp)
+                            modifier = Modifier.width(350.dp).padding(15.dp),
+                            textAlign = TextAlign.Center
                         )
-                        SearchBar(
-                            inputField = {
-                            var oltxtfield by remember { mutableStateOf("") }
-                            OutlinedTextField(
-                                value = oltxtfield,
-                                onValueChange = { oltxtfield = it },
-                                placeholder = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Image(
-                                            painter = painterResource(R.drawable.zoomfilled),
-                                            contentDescription = null
-                                        )
-                                        Text(
-                                            text = "Busca tu coleccion!",
-                                            fontSize = 20.sp,
-                                            color = Color.White,
-                                            fontWeight = FontWeight.Light
-                                        )
-                                    }
-                                },
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    unfocusedBorderColor = Color.Transparent,
-                                    focusedBorderColor = Color.Transparent
-                                )
-                            )
-                        },
-                            expanded = false,
-                            onExpandedChange = {},
-                            colors = SearchBarDefaults.colors(containerColor = searchbar),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 14.dp, vertical = 3.dp)
-                                .height(55.dp)
-                        ) { }
 
-                    }
+                        SearchBarCustom(modifier= Modifier, products=randomCol, onClick = {
+                            idFromCard=it
+                            viewModel.getProductsById(it)
+                            mostrarImagen.value=true
+                        })
+
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -292,7 +237,7 @@ fun HomeScreen(
                                         modifier = Modifier
                                             .size(90.dp)
                                             .padding(16.dp),
-                                        color = circleLoadingColor.value,
+                                        color = dark_blue,
                                         strokeWidth = 8.dp,
                                         trackColor = Color.LightGray,
                                         strokeCap = StrokeCap.Round
@@ -335,10 +280,10 @@ fun HomeScreen(
                         ) {
                             var textoColeccion = ""
                             Log.d("HomeScreenTitle", "${randomCol.size}")
-                            if (randomCol.isNotEmpty()) {
-                                textoColeccion = randomCol[0].nameCollection.toString()
+                            textoColeccion = if (randomCol.isNotEmpty()) {
+                                randomCol[0].nameCollection.toString()
                             } else {
-                                textoColeccion = "Sin Coleccion"
+                                "Sin Coleccion"
                             }
                             Text(
                                 text = textoColeccion,
@@ -356,7 +301,7 @@ fun HomeScreen(
                             Text(text = "Ver detalles", color = dark_blue)
                         }
                     }
-                    if (randomCol.isNullOrEmpty())
+                    if (randomCol.isEmpty())
                     {
                         Column(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(20.dp)) {
                             val animatedProgress = animateFloatAsState(
@@ -375,41 +320,30 @@ fun HomeScreen(
                     else {
                         LazyRow(modifier = Modifier.padding(top = 15.dp)) {
                             items(randomCol.size) { item ->
-                                if (randomCol[item].localimagepath != null) {
-                                    if (randomCol[item].desc == null) {
-                                        CardItems(
-                                            image = "${randomCol[item].localimagepath[0]}",
-                                            desc = randomCol[item].name,
-                                            modifier = Modifier.clickable {
-                                                itemFromCard = item
-//
-                                                mostrarImagen.value = true
-                                            }
-                                        )
 
-                                    } else {
-                                        CardItems(
-                                            image = randomCol[item].localimagepath[0],
-                                            desc = randomCol[item].desc.toString(),
-                                            modifier = Modifier.clickable {
-                                                itemFromCard = item
-
-                                                mostrarImagen.value = true
-
-                                                Log.d("BoleanoHomeScreen", "${mostrarImagen.value}")
-                                            }
-                                        )
-                                    }
-                                } else {
+                                if (randomCol[item].desc == null) {
                                     CardItems(
-                                        image = "R.drawable.abrazaditos",
-                                        desc = randomCol[item].desc.toString(),
+                                        image = "${randomCol[item].localimagepath[0]}",
+                                        desc = randomCol[item].name,
                                         modifier = Modifier.clickable {
-                                            itemFromCard = item
+                                            viewModel.getProductsById(randomCol[item].id)
                                             mostrarImagen.value = true
                                         }
                                     )
+
+                                } else {
+                                    CardItems(
+                                        image = randomCol[item].localimagepath[0],
+                                        desc = randomCol[item].desc.toString(),
+                                        modifier = Modifier.clickable {
+                                            viewModel.getProductsById(randomCol[item].id)
+                                            mostrarImagen.value = true
+
+                                            Log.d("BoleanoHomeScreen", "${mostrarImagen.value}")
+                                        }
+                                    )
                                 }
+
                             }
                         }
                     }

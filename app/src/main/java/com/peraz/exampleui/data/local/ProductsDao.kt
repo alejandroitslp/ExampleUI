@@ -24,4 +24,7 @@ interface ProductsDao {
 
     @Query("Select * from products where idCollection = :id")
     fun getCollectionProducts(id: Int): List<ProductsEntity>
+
+    @Query("Select * from products where id = :id")
+    fun getProductById(id: Int): ProductsEntity
 }

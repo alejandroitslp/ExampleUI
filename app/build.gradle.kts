@@ -84,4 +84,9 @@ dependencies {
 
     //Zoomable
     implementation("net.engawapg.lib:zoomable:2.8.0")
+
+    //Material Design 3
+    implementation("androidx.compose.material3:material3:1.4.0-alpha10")
+
+
 }

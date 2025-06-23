@@ -26,7 +26,7 @@ fun CircleProfilePicture(
     onClick: (Boolean)-> Unit,
 ){
     var boleano=false
-    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Image(painter = painterResource(R.drawable.profilepic), contentDescription = null, modifier=Modifier.size(50.dp).weight(.5f).padding(start = 20.dp)
             .clickable{
 
@@ -35,10 +35,8 @@ fun CircleProfilePicture(
         Image(painter = painterResource(R.drawable.bellcircle), contentDescription = null, modifier=Modifier.size(35.dp).weight(1f).padding(start = 100.dp)
             .clickable{
                 if (boleano){
-                    Log.d("Pendejo","$boleano")
                     boleano=!boleano
                 }else{
-                    Log.d("Pendejo","$boleano")
                     boleano=!boleano
                 }
                 onClick(boleano)

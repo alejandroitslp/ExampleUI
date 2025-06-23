@@ -13,12 +13,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.peraz.exampleui.data.CollectionRepository
 import com.peraz.exampleui.data.ProductRepository
+import com.peraz.exampleui.data.local.ProductsEntity
 import com.peraz.exampleui.data.local.toModel
 import com.peraz.exampleui.data.remote.ColProductModel
 import com.peraz.exampleui.data.remote.CollectionsModel
 import com.peraz.exampleui.domain.Resource
 import com.peraz.exampleui.domain.usecases.GetAllProductsUseCase
 import com.peraz.exampleui.domain.usecases.GetCollectionsUseCase
+import com.peraz.exampleui.domain.usecases.GetProductByIdUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -38,15 +40,21 @@ class HomeScreenViewModel @Inject constructor(
     private val collectionRepository: CollectionRepository,
     private val productRepository: ProductRepository,
     private val getAllProductsUseCase: GetAllProductsUseCase,
-    private val getCollectionsUseCase: GetCollectionsUseCase
+    private val getCollectionsUseCase: GetCollectionsUseCase,
+    private val getProductByIdUseCase: GetProductByIdUseCase
 ) : ViewModel() {
-    var collections = mutableStateListOf<CollectionsModel>()
-    var products = mutableStateListOf<ColProductModel>()
-    var isLoading= mutableStateOf(false)
+    var _collections = mutableStateListOf<CollectionsModel>()
+    val collections =_collections
+    var _products = mutableStateListOf<ColProductModel>()
+    val products = _products
+    var _isLoading= mutableStateOf(false)
+    val isLoading = _isLoading
     var progresBar= mutableFloatStateOf(0f)
     var _progressBar = getAllProductsUseCase.progress
     var _error = MutableSharedFlow<String>()
     val error= _error.asSharedFlow()
+    var _productById= mutableListOf<ColProductModel>()
+    var productById=_productById
 
 
     init {
@@ -65,43 +73,41 @@ class HomeScreenViewModel @Inject constructor(
             }catch(e: IOException){
                 Log.d("FallaCollection","$e")
             }
-
         }
 
+        getProductsFromRetrofit()
 
+
+    }
+
+    fun getProductsFromRetrofit(){
         viewModelScope.launch {
             try {
                 getAllProductsUseCase.invoke().collect {
-                    response->
+                        response->
                     if (response is Resource.Success){
-                        refreshProductsDao(1)
+                        refreshProductsDao()
                     }
                     if (response is Resource.Loading){
-                        viewModelScope.launch {
+                        viewModelScope.launch(Dispatchers.IO) {
                             _progressBar.collect {
-                                resultado->
-                                progresBar.value=resultado
+                                    resultado->
+                                progresBar.floatValue=resultado
                             }
                         }
                     }
                     if (response is Resource.Error){
                         //Aqui se puede poner la falla de conexion y que envie dato para decir que
                         //se trabajara con la base de datos local.
-                        refreshProductsDao(1)
-                        _error.emit("${response.message}")
+                        refreshProductsDao()
+                        _error.emit("Algo anduvo mal con la conexion a Datos, recuperando de base de datos local")
                     }
                 }
             }catch(e: IOException){
                 Log.d("FallaProduct","$e")
             }
         }
-
-
-
-
-
     }
-
 
     fun refreshProductsDao(
         id: Int? = null,
@@ -131,6 +137,24 @@ class HomeScreenViewModel @Inject constructor(
                     collections.add(it.toModel())
                 }
         }//Dependiendo de all lo que se guardo en la base de datos, regresa la coleccion hecha Modelo.
+    }
+
+    fun getProductsById(id: Int){
+        viewModelScope.launch(Dispatchers.IO) {
+            getProductByIdUseCase.invoke(id).collect {
+                result->
+
+                if (result.data!=null){
+                    _productById.clear()
+                    var model=result.data.toModel()
+                    _productById.add(result.data.toModel())
+                    Log.d("HomeScreenProductById", "$id , ${result.data}")
+                }
+                else{
+                    return@collect
+                }
+            }
+        }
     }
 
 
