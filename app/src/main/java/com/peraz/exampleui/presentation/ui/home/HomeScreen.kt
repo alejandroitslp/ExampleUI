@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import com.peraz.exampleui.Routes
 import com.peraz.exampleui.presentation.ui.theme.dark_blue
 import com.peraz.exampleui.presentation.ui.home.components.BottomBar
 import com.peraz.exampleui.presentation.ui.home.components.CardItems
@@ -70,6 +71,7 @@ import net.engawapg.lib.zoomable.zoomable
 @Composable
 fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel(),
+    navigateDetails: (String) -> Unit,
 ) {
     var idFromCard = remember { 0 }
     val collections = remember { viewModel.collections }
@@ -296,7 +298,7 @@ fun HomeScreen(
                                 .weight(1f)
                                 .padding(end = 18.dp)
                                 .clickable {
-
+                                    navigateDetails(Routes.Details)
                                 }) {
                             Text(text = "Ver detalles", color = dark_blue)
                         }

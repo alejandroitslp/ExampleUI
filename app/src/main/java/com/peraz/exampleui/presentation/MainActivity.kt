@@ -12,19 +12,24 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.peraz.exampleui.Routes
+import com.peraz.exampleui.presentation.ui.details.DetailsScreen
 import com.peraz.exampleui.presentation.ui.home.HomeScreen
 import com.peraz.exampleui.presentation.ui.theme.ExampleUITheme
 import com.peraz.exampleui.presentation.ui.welcome.WelcomeScreen
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.serialization.Serializable
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+
             ExampleUITheme {
                 Surface {
+
                     val navController = rememberNavController()
 
                     NavHost(
@@ -38,7 +43,13 @@ class MainActivity : ComponentActivity() {
                             })
                         }
                         composable(Routes.Home){
-                            HomeScreen()
+                            HomeScreen(navigateDetails = {
+                                route->
+                                navController.navigate(route)
+                            })
+                        }
+                        composable(Routes.Details){
+                            DetailsScreen()
                         }
                     }
                 }

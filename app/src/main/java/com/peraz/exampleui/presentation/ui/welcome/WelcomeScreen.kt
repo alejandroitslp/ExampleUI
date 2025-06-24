@@ -88,5 +88,4 @@ fun WelcomeScreen(
 @Preview
 @Composable
 fun HomeScreenPreview(){
-    HomeScreen()
 }
