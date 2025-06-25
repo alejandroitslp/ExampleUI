@@ -40,7 +40,7 @@ import com.peraz.exampleui.presentation.ui.theme.dark_blue
 @Composable
 fun WelcomeScreen(
     modifier: Modifier = Modifier,
-    navigateNext: (String) -> Unit,
+    onNavigatetoHome: () -> Unit,
 ){
     Column(horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -73,7 +73,7 @@ fun WelcomeScreen(
             }
             Column(modifier=Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                 Button(onClick = {
-                    navigateNext(Routes.Home)
+                    onNavigatetoHome()
                 }, colors = ButtonDefaults.buttonColors(containerColor = dark_blue), shape = RectangleShape, modifier=Modifier.clip(RoundedCornerShape(15.dp))) {
                     Text(text = "Empezar a explorar", color = Color.White)
                 }

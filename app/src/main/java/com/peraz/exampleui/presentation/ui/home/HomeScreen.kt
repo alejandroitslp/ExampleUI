@@ -44,6 +44,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -52,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.peraz.exampleui.Routes
 import com.peraz.exampleui.presentation.ui.theme.dark_blue
 import com.peraz.exampleui.presentation.ui.home.components.BottomBar
 import com.peraz.exampleui.presentation.ui.home.components.CardItems
@@ -71,16 +71,16 @@ import net.engawapg.lib.zoomable.zoomable
 @Composable
 fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel(),
-    navigateDetails: (String) -> Unit,
+    navigateDetails: (String, String) -> Unit,
 ) {
     var idFromCard = remember { 0 }
     val collections = remember { viewModel.collections }
     val randomCol = remember { viewModel.products }
-    var isLoading = remember { viewModel.isLoading }
+    val isLoading = remember { viewModel.isLoading }
     val context = LocalContext.current
     val progressBar= viewModel.progresBar
-    var errorConexion= viewModel.error
-    var productbyid=viewModel.productById
+    val errorConexion= viewModel.error
+    val productbyid=viewModel.productById
 
     val scope = rememberCoroutineScope()
 
@@ -298,7 +298,7 @@ fun HomeScreen(
                                 .weight(1f)
                                 .padding(end = 18.dp)
                                 .clickable {
-                                    navigateDetails(Routes.Details)
+                                    navigateDetails("#${backgroundcolor.value.toArgb().toUInt().toString(16).padStart(8,'0')}", randomCol[0].idCollection.toString())
                                 }) {
                             Text(text = "Ver detalles", color = dark_blue)
                         }
