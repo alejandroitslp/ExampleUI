@@ -1,20 +1,41 @@
 package com.peraz.exampleui.presentation.ui.welcome
 
 import android.graphics.Paint.Align
+import android.renderscript.ScriptGroup
+import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SecureTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,22 +47,38 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.peraz.exampleui.R
 import com.peraz.exampleui.Routes
 import com.peraz.exampleui.presentation.ui.home.HomeScreen
 import com.peraz.exampleui.presentation.ui.theme.dark_blue
+import com.peraz.exampleui.presentation.ui.theme.light_blue
 
 @Composable
 fun WelcomeScreen(
     modifier: Modifier = Modifier,
+    welcomeScreenViewModel: WelcomeScreenViewModel= hiltViewModel(),
     onNavigatetoHome: () -> Unit,
 ){
+    val usuario= welcomeScreenViewModel.users.firstOrNull()
+    val isReady=remember {welcomeScreenViewModel.isReady}
+    var passwordVisible=remember{mutableStateOf(true)}
+
+    LaunchedEffect(isReady.value) {
+        Log.d("maximino","${isReady.value}")
+        if (isReady.value){
+            onNavigatetoHome()
+        }
+    }
     Column(horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier=Modifier.fillMaxSize()) {
@@ -66,16 +103,56 @@ fun WelcomeScreen(
         }
         Column(modifier=Modifier.background(color = Color.White).weight(.6f).fillMaxWidth().padding(top = 10.dp),
             verticalArrangement = Arrangement.Top, horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(color = Color.Black, text="Bienvenido a nuestra tienda online!", fontWeight = FontWeight.Bold, fontSize = 30.sp, fontFamily = FontFamily.Serif, textAlign = TextAlign.Center)
-            Column(modifier=Modifier.weight(1f).width(300.dp),
+            Text(color = Color.Black, text="Bienvenido a nuestro catalogo online!", fontWeight = FontWeight.Bold, fontSize = 30.sp, fontFamily = FontFamily.Serif, textAlign = TextAlign.Center)
+            Column(modifier=Modifier.weight(.3f).width(300.dp),
                 verticalArrangement = Arrangement.Center) {
-                Text(color = Color.Black ,fontSize = 17.sp ,text = "Experimente la mas extraordinaria y visionaria experiencia de un CRM completamente desarrollado para sus necesidades. Donde la imaginacion da lugar a cosas increibles.",)
+                Text(color = Color.Black ,fontSize = 17.sp ,text = "Aqui podrás encontrar una gran colección de joyeria en plata para revisar inventario, precios y detalles de tus items favoritos..",)
             }
-            Column(modifier=Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Button(onClick = {
-                    onNavigatetoHome()
-                }, colors = ButtonDefaults.buttonColors(containerColor = dark_blue), shape = RectangleShape, modifier=Modifier.clip(RoundedCornerShape(15.dp))) {
-                    Text(text = "Empezar a explorar", color = Color.White)
+            Column(modifier=Modifier.weight(.8f).width(280.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                var nametxt=remember{ mutableStateOf("") }
+                val passwordtxt = remember {mutableStateOf("")}
+                OutlinedTextField(
+                    textStyle = TextStyle(color = dark_blue),
+                    value=nametxt.value,
+                    onValueChange = {
+                        nametxt.value=it},
+                    placeholder = {Text(text = "Escriba su usuario: ", color = Color.DarkGray)},
+                )
+                Spacer(modifier=Modifier.height(10.dp))
+                Row{
+                    OutlinedTextField(
+                        textStyle = TextStyle(color = dark_blue),
+                        value=passwordtxt.value,
+                        onValueChange = {
+                            passwordtxt.value=it},
+                        visualTransformation = if (passwordVisible.value) PasswordVisualTransformation() else VisualTransformation.None ,
+                        placeholder = {Text(text = "Escriba su contraseña: " , color = Color.DarkGray)},
+                        modifier=Modifier.weight(.9f)
+                    )
+                    Spacer(modifier=Modifier.width(3.dp))
+                    IconButton(onClick = {
+                        passwordVisible.value=!passwordVisible.value
+                    }) {
+                        Icon(modifier=Modifier.height(50.dp).weight(.2f),painter = painterResource(R.drawable.eye), contentDescription = null)
+                    }
+                }
+
+                Spacer(modifier=Modifier.height(25.dp))
+                Row {
+                    Button(onClick = {
+                        onNavigatetoHome()
+                    }, colors = ButtonDefaults.buttonColors(containerColor = dark_blue), shape = RectangleShape, modifier=Modifier.clip(RoundedCornerShape(15.dp))) {
+                        Text(text = "Entrar como invitado", color = Color.White)
+                    }
+                    Spacer(modifier=Modifier.width(3.dp))
+                    Button(onClick = {
+                        if (!isReady.value){
+                            welcomeScreenViewModel.login(nametxt.value, passwordtxt.value)
+
+                        }
+                                     }, colors = ButtonDefaults.buttonColors(containerColor = dark_blue), shape = RectangleShape, modifier=Modifier.clip(RoundedCornerShape(15.dp))) {
+                        Text(text = "Entrar", color = Color.White)
+                    }
                 }
             }
         }

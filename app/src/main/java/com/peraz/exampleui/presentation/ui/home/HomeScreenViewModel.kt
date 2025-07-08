@@ -3,16 +3,18 @@ package com.peraz.exampleui.presentation.ui.home
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
+
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.peraz.exampleui.data.CollectionRepository
 import com.peraz.exampleui.data.ProductRepository
+import com.peraz.exampleui.data.UserPreferencesRepository
 import com.peraz.exampleui.data.local.ProductsEntity
 import com.peraz.exampleui.data.local.toModel
 import com.peraz.exampleui.data.remote.ColProductModel
@@ -41,12 +43,12 @@ class HomeScreenViewModel @Inject constructor(
     private val productRepository: ProductRepository,
     private val getAllProductsUseCase: GetAllProductsUseCase,
     private val getCollectionsUseCase: GetCollectionsUseCase,
-    private val getProductByIdUseCase: GetProductByIdUseCase
+    private val getProductByIdUseCase: GetProductByIdUseCase,
+    private val userPreferencesRepository: UserPreferencesRepository,
 ) : ViewModel() {
     var _collections = mutableStateListOf<CollectionsModel>()
     val collections =_collections
-    var _products = mutableStateListOf<ColProductModel>()
-    val products = _products
+    val products = mutableStateListOf<ColProductModel>()
     var _isLoading= mutableStateOf(false)
     val isLoading = _isLoading
     var progresBar= mutableFloatStateOf(0f)
@@ -55,9 +57,31 @@ class HomeScreenViewModel @Inject constructor(
     val error= _error.asSharedFlow()
     var _productById= mutableListOf<ColProductModel>()
     var productById=_productById
+    var _name=mutableStateOf<String?>("")
+    var _token=mutableStateOf<String?>("")
+    var _role=mutableStateOf<Int?>(0)
+
+    val name=_name
+    val token=_token
+    val role=_role
 
 
     init {
+        viewModelScope.launch{
+            userPreferencesRepository.userNameFlow.collect{
+                name->
+                _name.value=name
+            }
+            userPreferencesRepository.roleFlow.collect {
+                role->
+                _role.value=role
+            }
+            userPreferencesRepository.tokenFlow.collect {
+                token->
+                _token.value=token
+            }
+        }
+
         viewModelScope.launch {
             try {
                 getCollectionsUseCase.invoke().collect {
@@ -112,20 +136,14 @@ class HomeScreenViewModel @Inject constructor(
     fun refreshProductsDao(
         id: Int? = null,
     ) {
-        var job1=viewModelScope.launch(Dispatchers.IO) {
+        products.clear()
+        val job1=viewModelScope.launch(Dispatchers.IO) {
             if (id != null) {
-                products.clear()
-                    productRepository.getSpecificCollectionProducts(id).map {
-                        it.toModel()
-                        products.add(it.toModel())
-                    }
+                productRepository.getSpecificCollectionProducts(id)
             } else{
-                products.clear()
-                    productRepository.getProducts().map{
-                        it.toModel()
-                        products.add(it.toModel())
-                    }
+                productRepository.getProducts()
             }
+            products.addAll(productRepository.listOfProductsModel)
         }
     }
 

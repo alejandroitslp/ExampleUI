@@ -71,9 +71,8 @@ import net.engawapg.lib.zoomable.zoomable
 @Composable
 fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel(),
-    navigateDetails: (String, String) -> Unit,
+    navigateDetails: (String, String?) -> Unit,
 ) {
-    var idFromCard = remember { 0 }
     val collections = remember { viewModel.collections }
     val randomCol = remember { viewModel.products }
     val isLoading = remember { viewModel.isLoading }
@@ -81,13 +80,13 @@ fun HomeScreen(
     val progressBar= viewModel.progresBar
     val errorConexion= viewModel.error
     val productbyid=viewModel.productById
-
+    val name = viewModel.name.value
     val scope = rememberCoroutineScope()
 
 
     var isRefreshing by remember { mutableStateOf(false) }
     var estadoColor by remember { mutableStateOf(false) }
-    var backgroundcolor = remember { Animatable(light_blue) }
+    val backgroundcolor = remember { Animatable(light_blue) }
     val mostrarImagen =remember {mutableStateOf(false)}
     val snackbarHostState=remember{ SnackbarHostState() }
 
@@ -99,7 +98,6 @@ fun HomeScreen(
                 dark_blue
             }, animationSpec = tween(6000)
         )
-
     }
     LaunchedEffect(key1 = true){
 
@@ -128,7 +126,7 @@ fun HomeScreen(
 
                 viewModel.refreshCollectionsDao()
 
-                var randomizer = (1..collections.size).random()
+                val randomizer = (1..collections.size).random()
                 viewModel.refreshProductsDao(randomizer)
 
 
@@ -204,8 +202,7 @@ fun HomeScreen(
                         }
                         .weight(.5f)
                 ) {
-
-                        CircleProfilePicture(name = "Alejandro", navigateMenu = {
+                        CircleProfilePicture(name = name, navigateMenu = {
 
                         }, onClick = { isAnimatable ->
                             estadoColor = isAnimatable
@@ -221,7 +218,6 @@ fun HomeScreen(
                         )
 
                         SearchBarCustom(modifier= Modifier, products=randomCol, onClick = {
-                            idFromCard=it
                             viewModel.getProductsById(it)
                             mostrarImagen.value=true
                         })
@@ -233,7 +229,7 @@ fun HomeScreen(
                             .fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         LazyRow(horizontalArrangement = Arrangement.Center) {
-                            if (isLoading.value == false) {
+                            if (!isLoading.value) {
                                 items(1) { index ->
                                     CircularProgressIndicator(
                                         modifier = Modifier
@@ -280,10 +276,9 @@ fun HomeScreen(
                                 .weight(1f)
                                 .padding(end = 18.dp)
                         ) {
-                            var textoColeccion = ""
                             Log.d("HomeScreenTitle", "${randomCol.size}")
-                            textoColeccion = if (randomCol.isNotEmpty()) {
-                                randomCol[0].nameCollection.toString()
+                            val textoColeccion: String = if (randomCol.isNotEmpty()) {
+                                randomCol[0].nameCollection
                             } else {
                                 "Sin Coleccion"
                             }
@@ -293,14 +288,18 @@ fun HomeScreen(
                                 fontWeight = FontWeight.ExtraBold
                             )
                         }
-                        Column(
-                            horizontalAlignment = Alignment.End, modifier = Modifier
-                                .weight(1f)
-                                .padding(end = 18.dp)
-                                .clickable {
-                                    navigateDetails("#${backgroundcolor.value.toArgb().toUInt().toString(16).padStart(8,'0')}", randomCol[0].idCollection.toString())
-                                }) {
-                            Text(text = "Ver detalles", color = dark_blue)
+                        if (!randomCol.isEmpty()){
+                            Column(
+                                horizontalAlignment = Alignment.End, modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 18.dp)
+                                    .clickable {
+                                        navigateDetails("#${backgroundcolor.value.toArgb().toUInt().toString(16).padStart(8,'0')}",
+                                            randomCol[0].idCollection.toString()
+                                        )
+                                    }) {
+                                Text(text = "Ver detalles", color = dark_blue)
+                            }
                         }
                     }
                     if (randomCol.isEmpty())

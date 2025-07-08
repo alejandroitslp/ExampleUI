@@ -24,7 +24,7 @@ object RetrofitModule {
     fun provideRetrofit(baseUrl: String): Retrofit = Retrofit.Builder()
         .baseUrl(baseUrl)
         .addConverterFactory(GsonConverterFactory.create())
-        .client(getUnsafeOkHttpClient())
+        .client(getUnsafeOkHttpClient()!!)
         .build()
 
     @Provides

@@ -4,12 +4,14 @@ import android.content.Context
 import android.util.Log
 import com.peraz.exampleui.data.local.ProductsDao
 import com.peraz.exampleui.data.local.ProductsEntity
+import com.peraz.exampleui.data.local.toModel
 import com.peraz.exampleui.data.remote.ApiInterface
 import com.peraz.exampleui.data.remote.ColProductModel
 import com.peraz.exampleui.data.remote.toProductsEntityList
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -26,7 +28,9 @@ class ProductRepository @Inject constructor(
     private val apiInterface: ApiInterface
 ){
     var _counterProgress= MutableSharedFlow<Float>()
-    var counterProgress = _counterProgress.asSharedFlow()
+    val counterProgress = _counterProgress.asSharedFlow()
+    var _listOfProductsModel = mutableListOf<ColProductModel>()
+    val listOfProductsModel = _listOfProductsModel
 
 
     suspend fun refreshProducts(): List<ProductsEntity>?{
@@ -129,10 +133,20 @@ class ProductRepository @Inject constructor(
 
 
     fun getProducts(): List<ProductsEntity>{
+        _listOfProductsModel.clear()
+        productsDao.getAllProducts().map {
+            it.toModel()
+            _listOfProductsModel.add(it.toModel())
+        }
         return productsDao.getAllProducts()
     }//Con este se obtienen los datos de la base de datos.
 
     fun getSpecificCollectionProducts(id: Int): List<ProductsEntity>{
+        _listOfProductsModel.clear()
+        productsDao.getCollectionProducts(id).map {
+            it.toModel()
+            _listOfProductsModel.add(it.toModel())
+        }
         return productsDao.getCollectionProducts(id)
     }//Con este se obtienen los productos especificos de alguna coleccion.
 

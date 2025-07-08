@@ -90,5 +90,7 @@ dependencies {
     //Material Design 3
     implementation("androidx.compose.material3:material3:1.4.0-alpha10")
 
+    //Jetpack DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
 
 }
