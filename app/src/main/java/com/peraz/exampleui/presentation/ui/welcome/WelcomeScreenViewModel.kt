@@ -28,8 +28,7 @@ import kotlinx.coroutines.withContext
 class WelcomeScreenViewModel @Inject constructor(
     private val getUserUseCase: GetUserUseCase,
     ): ViewModel() {
-        var _users = mutableStateListOf<UserModel?>()
-        val users = _users
+
         var _isReady=mutableStateOf(false)
         val isReady=_isReady
         var _isButtonAvailable=mutableStateOf(true)
@@ -45,8 +44,6 @@ class WelcomeScreenViewModel @Inject constructor(
                     }
                     is Resource.Success -> {
                         _isReady.value=true
-                        _users.clear()
-                        _users.add(result.data)
                         delay(3000)
                         _isReady.value=false
                     }

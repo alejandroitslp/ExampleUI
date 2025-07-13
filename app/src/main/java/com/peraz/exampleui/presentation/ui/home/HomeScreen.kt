@@ -1,6 +1,8 @@
 package com.peraz.exampleui.presentation.ui.home
 
 import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -52,6 +54,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavHost
 import coil.compose.AsyncImage
 import com.peraz.exampleui.presentation.ui.theme.dark_blue
 import com.peraz.exampleui.presentation.ui.home.components.BottomBar
@@ -71,7 +75,7 @@ import net.engawapg.lib.zoomable.zoomable
 @Composable
 fun HomeScreen(
     viewModel: HomeScreenViewModel = hiltViewModel(),
-    navigateDetails: (String, String?) -> Unit,
+    navigateDetails: (String, String?, Boolean) -> Unit,
 ) {
     val collections = remember { viewModel.collections }
     val randomCol = remember { viewModel.products }
@@ -81,6 +85,7 @@ fun HomeScreen(
     val errorConexion= viewModel.error
     val productbyid=viewModel.productById
     val name = viewModel.name.value
+    val role = viewModel.role.value
     val scope = rememberCoroutineScope()
 
 
@@ -108,11 +113,22 @@ fun HomeScreen(
 
     }
 
+    BackHandler(enabled = true) {
+
+        Toast.makeText(context, "Logged out", Toast.LENGTH_SHORT).show()
+        viewModel.resetUser()
+        navigateDetails("","",false)
+    }
 
     Scaffold(modifier = Modifier.fillMaxSize(), bottomBar = {
         BottomBar(sinchronize = {
             viewModel.getProductsFromRetrofit()
-        })
+//            viewModel.getProductsFromRetrofit()
+        },
+            logout = {
+                viewModel.resetUser()
+                navigateDetails("","",false)
+            })
     }, snackbarHost= {SnackbarHost(hostState = snackbarHostState)}) { padding ->
         PullToRefreshBox(
             isRefreshing = isRefreshing,
@@ -144,12 +160,15 @@ fun HomeScreen(
                         modifier = Modifier.fillMaxWidth().height(500.dp),
                         onDismissRequest = {},
                         title = {
-                            Text(text = productbyid.first().name)
+                            Text(text = productbyid.first().name, color = Color.White)
                                 },
                         text = {
                             Column {
-                                Text(text = "Precio: $${productbyid.first().price} MxN")
-                                Text(text = "Stock: ${productbyid.first().stock}")
+                                Text(text = "Precio: $${productbyid.first().price} MxN", color = Color.White)
+                                Log.d("role", "${role}")
+                                if (role!=null && role.equals(1)){
+                                    Text(text = "Stock: ${productbyid.first().stock}", color = Color.White)
+                                }
                                 Spacer(modifier = Modifier.height(5.dp))
                                 LazyRow(modifier = Modifier.fillMaxSize()) {
                                     items(productbyid.first().localimagepath.size) {
@@ -294,8 +313,9 @@ fun HomeScreen(
                                     .weight(1f)
                                     .padding(end = 18.dp)
                                     .clickable {
+                                        //Aqui se envia el color.
                                         navigateDetails("#${backgroundcolor.value.toArgb().toUInt().toString(16).padStart(8,'0')}",
-                                            randomCol[0].idCollection.toString()
+                                            randomCol[0].idCollection.toString(), true
                                         )
                                     }) {
                                 Text(text = "Ver detalles", color = dark_blue)

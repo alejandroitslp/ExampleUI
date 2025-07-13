@@ -17,6 +17,7 @@ import javax.inject.Singleton
 object RetrofitModule {
 
     @Provides
+//    fun providesBaseUrl(): String="http://192.168.1.7:8000/"
     fun providesBaseUrl(): String="http://192.168.100.106:8000/"
 
     @Provides

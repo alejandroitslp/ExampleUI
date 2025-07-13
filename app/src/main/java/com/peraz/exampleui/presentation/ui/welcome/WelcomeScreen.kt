@@ -69,7 +69,6 @@ fun WelcomeScreen(
     welcomeScreenViewModel: WelcomeScreenViewModel= hiltViewModel(),
     onNavigatetoHome: () -> Unit,
 ){
-    val usuario= welcomeScreenViewModel.users.firstOrNull()
     val isReady=remember {welcomeScreenViewModel.isReady}
     var passwordVisible=remember{mutableStateOf(true)}
 

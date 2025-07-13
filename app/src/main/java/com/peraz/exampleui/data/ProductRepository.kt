@@ -10,8 +10,8 @@ import com.peraz.exampleui.data.remote.ColProductModel
 import com.peraz.exampleui.data.remote.toProductsEntityList
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -26,46 +26,55 @@ class ProductRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val okHttpClient: OkHttpClient,
     private val apiInterface: ApiInterface
-){
-    var _counterProgress= MutableSharedFlow<Float>()
+) {
+    var _counterProgress = MutableSharedFlow<Float>()
     val counterProgress = _counterProgress.asSharedFlow()
     var _listOfProductsModel = mutableListOf<ColProductModel>()
     val listOfProductsModel = _listOfProductsModel
 
 
-    suspend fun refreshProducts(): List<ProductsEntity>?{
-        try{
-            var auxlistofproducts= mutableListOf<ColProductModel>()//Lista vacia que sirve para recolectar los productos y despues volverlo lista de entities
+    suspend fun refreshProducts(): List<ProductsEntity>? {
+        try {
+            var auxlistofproducts =
+                mutableListOf<ColProductModel>()//Lista vacia que sirve para recolectar los productos y despues volverlo lista de entities
 
 
-            val apiProducts = apiInterface.getProducts().body()?.products// apiProducts es la lista de resultado e items
+            val apiProducts = apiInterface.getProducts()
+                .body()?.products// apiProducts es la lista de resultado e items
+
+
+            compareDataBases(apiProducts)
 
             //Obtiene la lista de productos desde internet
-            if (!apiProducts.isNullOrEmpty()){
-                var sumaFloats= 0f //permite la suma de floats para la progressBar de HomeScreen
-                var calculoFloats=100f/apiProducts.size.toFloat()
+            if (!apiProducts.isNullOrEmpty()) {
+                var sumaFloats = 0f //permite la suma de floats para la progressBar de HomeScreen
+                var calculoFloats = 100f / apiProducts.size.toFloat()
 
-                for(product in apiProducts){ //por cada producto va a recolectar las imagenes
+                for (product in apiProducts) { //por cada producto va a recolectar las imagenes
 
-                    sumaFloats=(sumaFloats+calculoFloats)
+                    sumaFloats = (sumaFloats + calculoFloats)
                     val imageId = product.id
-                    var localImagePath= mutableListOf<String?>() //sirve como auxiliar para recolectar el path y guardarlo en Room
-                    var counter=1// el contador cuenta el producto para llevar un orden de folder con id de cada producto
-                    for (image in product.images){
+                    var localImagePath =
+                        mutableListOf<String?>() //sirve como auxiliar para recolectar el path y guardarlo en Room
+                    var counter =
+                        1// el contador cuenta el producto para llevar un orden de folder con id de cada producto
+                    for (image in product.images) {
 
-                        if (image!!.isNotBlank() && imageId !=null){
-                            localImagePath.add( downloadAndSaveImage(
-                                foldernumber=imageId,
-                                context= context,
-                                imageUrl= image.toString(),
-                                fileName= "product_image_$counter.jpg"
-                            ))
+                        if (image!!.isNotBlank() && imageId != null) {
+                            localImagePath.add(
+                                downloadAndSaveImage(
+                                    foldernumber = imageId,
+                                    context = context,
+                                    imageUrl = image.toString(),
+                                    fileName = "product_image_$counter.jpg"
+                                )
+                            )
                             counter++
                         }
                     }
-                    _counterProgress.emit(sumaFloats/100f) //Emite los floats para la progressBar de HomeScreen
+                    _counterProgress.emit(sumaFloats / 100f) //Emite los floats para la progressBar de HomeScreen
 
-                    val newProduct=product.copy(
+                    val newProduct = product.copy(
                         localimagepath = localImagePath
                     )//en cada nuevo valor pasado a entities, va a agregar el localpath almacenado arriba
                     auxlistofproducts.add(newProduct)//se agrega a la lista auxiliar que despues pasara a lista de entities
@@ -74,15 +83,14 @@ class ProductRepository @Inject constructor(
                 }
             }//Aqui se van a recolectar las imagenes
 
-            val productsEntities=auxlistofproducts.toProductsEntityList()
+            val productsEntities = auxlistofproducts.toProductsEntityList()
             //Convierte los productos obtenidos de internet a un EntityLIst(DB)
             productsDao.insertProduct(productsEntities!!)
             //Actualiza la base de datos si es que hay una.
 
             return productsEntities
 
-        }catch(e: Exception)
-        {
+        } catch (e: Exception) {
             throw e
         }
         return null
@@ -95,7 +103,7 @@ class ProductRepository @Inject constructor(
         foldernumber: Int
     ): String? {
         return withContext(Dispatchers.IO) {
-            try{
+            try {
                 val request = Request.Builder().url(imageUrl).build()
                 val response = okHttpClient.newCall(request).execute()
 
@@ -111,7 +119,8 @@ class ProductRepository @Inject constructor(
                         storageDir.mkdirs()
                     }//Si el directorio no existe, lo crea
 
-                    val imageFile = File(storageDir, fileName) //crea el archivo en la ruta con el nombre dado
+                    val imageFile =
+                        File(storageDir, fileName) //crea el archivo en la ruta con el nombre dado
 
                     FileOutputStream(imageFile).use { outputStream ->
                         responseBody.byteStream().use { inputStream ->
@@ -121,10 +130,14 @@ class ProductRepository @Inject constructor(
                     Log.d("ImageDownloader", "Image saved to: ${imageFile.absolutePath}")
                     return@withContext imageFile.absolutePath
                 } ?: return@withContext null
-            }catch (e: IOException){
-                Log.e("ImageDownloader", "IOException during image download or save: ${e.message}", e)
+            } catch (e: IOException) {
+                Log.e(
+                    "ImageDownloader",
+                    "IOException during image download or save: ${e.message}",
+                    e
+                )
                 throw e
-            }catch (e: Exception){
+            } catch (e: Exception) {
                 Log.e("ImageDownloader", "Generic Exception: $e", e)
                 throw e
             }
@@ -132,7 +145,7 @@ class ProductRepository @Inject constructor(
     }
 
 
-    fun getProducts(): List<ProductsEntity>{
+    fun getProducts(): List<ProductsEntity> {
         _listOfProductsModel.clear()
         productsDao.getAllProducts().map {
             it.toModel()
@@ -141,7 +154,7 @@ class ProductRepository @Inject constructor(
         return productsDao.getAllProducts()
     }//Con este se obtienen los datos de la base de datos.
 
-    fun getSpecificCollectionProducts(id: Int): List<ProductsEntity>{
+    fun getSpecificCollectionProducts(id: Int): List<ProductsEntity> {
         _listOfProductsModel.clear()
         productsDao.getCollectionProducts(id).map {
             it.toModel()
@@ -150,8 +163,38 @@ class ProductRepository @Inject constructor(
         return productsDao.getCollectionProducts(id)
     }//Con este se obtienen los productos especificos de alguna coleccion.
 
-    fun getProductById(id: Int): ProductsEntity{
+    fun getProductById(id: Int): ProductsEntity {
         return productsDao.getProductById(id)
+    }
+
+    suspend fun compareDataBases(productsRetrofit: List<ColProductModel>?) {
+        return withContext(Dispatchers.IO) {
+            val productsFromDao = getProducts()
+
+        if (!productsRetrofit.isNullOrEmpty() && productsFromDao.isNotEmpty()) {
+            val matchingDaoEntities: List<ProductsEntity> = productsRetrofit.let { apiProducts ->
+                val apiProductsIds = apiProducts.map { it.id }.toSet()
+
+                productsFromDao.filter { daoEntity ->
+                    daoEntity.id !in apiProductsIds
+                }
+            }
+            for (item in matchingDaoEntities) {
+                if (item.id != null) {
+                    productsDao.deleteProductById(item.id)
+                    val directory = File(context.filesDir, "image_products_${item.id}")
+                    if (directory.exists()) {
+                        directory.deleteRecursively()
+                    } else {
+                        Log.d(
+                            "ProductRepository",
+                            "No existe el directorio image_products_${item.id}"
+                        )
+                    }
+                }
+            }
+        }
+    }
     }
 
 }

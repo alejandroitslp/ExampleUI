@@ -49,21 +49,32 @@ import kotlin.math.sin
 
 @Composable
 fun BottomBar(
-    sinchronize: ()->Unit
+    sinchronize: ()->Unit,
+    logout: ()-> Unit
 ){
     Row(modifier=Modifier.fillMaxWidth().background(color = Color.White).border(width = 0.3.dp, color=Color.LightGray, shape= RectangleShape), horizontalArrangement = Arrangement.Center) {
         Column(modifier = Modifier.weight(.33f).padding(all = 20.dp).clickable{}) {
-            Image(painter = painterResource(R.drawable.home), contentDescription = null, modifier=Modifier.size(30.dp))
-            Text(text = "Home", fontSize = 13.sp, color = dark_blue)
+            IconButton(onClick = {
+
+            }){
+                Image(painter = painterResource(R.drawable.happy), contentDescription = null, modifier=Modifier.size(30.dp))
+                Text(text = "Happy", fontSize = 13.sp, color = dark_blue)
+            }
+
         }
         Column(modifier = Modifier.weight(.33f).padding(15.dp).clickable{
             sinchronize()
         }, horizontalAlignment = Alignment.CenterHorizontally) {
             Image(painter = painterResource(R.drawable.arrowsexchangewhite), contentDescription = null, modifier=Modifier.size(50.dp).clip(shape = CircleShape).background(color= dark_blue))
         }
-        Column(modifier = Modifier.weight(.33f).padding(all = 20.dp).clickable{}, horizontalAlignment = Alignment.End) {
-            Image(painter = painterResource(R.drawable.settings), contentDescription = null, modifier=Modifier.size(30.dp))
-            Text(text = "Config", fontSize = 13.sp, color = dark_blue)
+        Column(modifier = Modifier.weight(.33f).padding(all = 20.dp), horizontalAlignment = Alignment.End) {
+            IconButton(onClick ={
+                logout()
+            }) {
+                Image(painter = painterResource(R.drawable.exit), contentDescription = null, modifier=Modifier.size(30.dp))
+                Text(text = "Salir", fontSize = 13.sp, color = dark_blue)
+            }
+
         }
 
     }

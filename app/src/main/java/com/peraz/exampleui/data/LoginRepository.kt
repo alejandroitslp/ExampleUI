@@ -24,6 +24,10 @@ class LoginRepository @Inject constructor(
                 userPreferencesRepository.updateUserName(user.fullName)
                 userPreferencesRepository.updateRole(user.admin)
                 userPreferencesRepository.updateToken(user.token)
+            }else{
+                userPreferencesRepository.updateUserName("")
+                userPreferencesRepository.updateRole(0)
+                userPreferencesRepository.updateToken("")
             }
             return user
         } catch (e: IOException) {

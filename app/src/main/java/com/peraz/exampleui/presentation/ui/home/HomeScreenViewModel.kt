@@ -1,21 +1,15 @@
 package com.peraz.exampleui.presentation.ui.home
 
 import android.util.Log
-import android.widget.Toast
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.peraz.exampleui.data.CollectionRepository
 import com.peraz.exampleui.data.ProductRepository
 import com.peraz.exampleui.data.UserPreferencesRepository
-import com.peraz.exampleui.data.local.ProductsEntity
 import com.peraz.exampleui.data.local.toModel
 import com.peraz.exampleui.data.remote.ColProductModel
 import com.peraz.exampleui.data.remote.CollectionsModel
@@ -27,13 +21,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import java.io.IOException
 
@@ -67,20 +55,23 @@ class HomeScreenViewModel @Inject constructor(
 
 
     init {
-        viewModelScope.launch{
-            userPreferencesRepository.userNameFlow.collect{
-                name->
-                _name.value=name
+        viewModelScope.launch {
+            userPreferencesRepository.userNameFlow.collect { name ->
+                _name.value = name
             }
-            userPreferencesRepository.roleFlow.collect {
-                role->
-                _role.value=role
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.roleFlow.collect { role ->
+                _role.value = role
             }
-            userPreferencesRepository.tokenFlow.collect {
+        }
+        viewModelScope.launch {
+        userPreferencesRepository.tokenFlow.collect {
                 token->
                 _token.value=token
             }
         }
+
 
         viewModelScope.launch {
             try {
@@ -175,5 +166,12 @@ class HomeScreenViewModel @Inject constructor(
         }
     }
 
+    fun resetUser(){
+        viewModelScope.launch(Dispatchers.IO) {
+            userPreferencesRepository.updateUserName("")
+            userPreferencesRepository.updateToken("")
+            userPreferencesRepository.updateRole(0)
+        }
+    }
 
 }

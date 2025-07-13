@@ -67,8 +67,13 @@ class MainActivity : ComponentActivity() {
                             val homeArgs: Home = backStackEntry.toRoute()
                             HomeScreen(
                                 navigateDetails = {
-                                    colorBG, collectionId->
-                                navController.navigate(route = Details(colorBackground = colorBG, id=collectionId))
+                                    colorBG, collectionId, isdetails->
+                                    if (isdetails){
+                                        navController.navigate(route = Details(colorBackground = colorBG, id=collectionId))
+                                    }
+                                    else{
+                                        navController.navigate(route = Welcome())
+                                    }
                                     //Desde HomeScreen pasa el color adquirido. y el ID de coleccion
                             })
                         }
