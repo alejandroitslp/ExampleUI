@@ -1,9 +1,15 @@
 package com.peraz.exampleui.presentation.ui.home
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.content.FileProvider
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -23,6 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import java.io.File
 import java.io.IOException
 
 @HiltViewModel
@@ -172,6 +179,42 @@ class HomeScreenViewModel @Inject constructor(
             userPreferencesRepository.updateToken("")
             userPreferencesRepository.updateRole(0)
         }
+    }
+
+    fun sendWhatsappMessage(
+        context: Context,
+        name: String,
+        price: String,
+        payments: String,
+        imageFile: File
+    ){
+        val fileUri: Uri? = try {
+            FileProvider.getUriForFile(
+                context,
+                "${context.packageName}",
+                imageFile
+            )
+        }catch (e: IllegalArgumentException){
+            Log.d("HSVM","Error creando la uri:  ${e.message}")
+            null
+        }
+
+        fileUri?.let { uri->
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/jpeg"
+                Log.d("fileUri","$uri")
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_TEXT, "Nombre del producto: $name , precio normal: $${price}, el precio a pagos solicitado: $${payments}")
+                setPackage("com.whatsapp")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            try {
+                context.startActivity(intent)
+            }catch (e: ActivityNotFoundException){
+                Toast.makeText(context, "Whatsapp no instalado", Toast.LENGTH_SHORT).show()
+            }
+        }
+
     }
 
 }

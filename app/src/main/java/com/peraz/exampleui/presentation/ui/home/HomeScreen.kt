@@ -73,6 +73,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.engawapg.lib.zoomable.rememberZoomState
 import net.engawapg.lib.zoomable.zoomable
+import java.io.File
 import java.text.DecimalFormat
 import kotlin.math.pow
 
@@ -93,6 +94,7 @@ fun HomeScreen(
     val name = viewModel.name.value
     val role = viewModel.role.value
     val scope = rememberCoroutineScope()
+    val dec=DecimalFormat("#,###.00")
 
 
     var isRefreshing by remember { mutableStateOf(false) }
@@ -100,6 +102,7 @@ fun HomeScreen(
     val backgroundcolor = remember { Animatable(light_blue) }
     val mostrarImagen =remember {mutableStateOf(false)}
     val snackbarHostState=remember{ SnackbarHostState() }
+    var pagos=0.00
 
     LaunchedEffect(estadoColor) {
         backgroundcolor.animateTo(
@@ -163,7 +166,9 @@ fun HomeScreen(
                 if (mostrarImagen.value){
                     AlertDialog(
                         containerColor = Color.Black,
-                        modifier = Modifier.fillMaxWidth().height(650.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(650.dp),
                         onDismissRequest = {},
                         title = {
                             Text(text = productbyid.first().name, color = Color.White)
@@ -224,7 +229,7 @@ fun HomeScreen(
                                     disabledSuffixColor = Color.White,
                                     errorSuffixColor = Color.White,
                                 ), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number) )
-                                var pagos=0.00
+
                                 if (quantity.value!="1"&& quantity.value!=""){
                                     if (prodprice.toDouble()<1000)
                                         pagos= prodprice.toDouble()*((1+.07).pow(quantity.value.toDouble()))
@@ -234,7 +239,7 @@ fun HomeScreen(
                                 }else{
                                     pagos= prodprice.toDouble()
                                 }
-                                val dec=DecimalFormat("#,###.00")
+
 
                                 Text(text = "El valor en precio a ${quantity.value} semanas, es: ${dec.format(pagos)}", color = Color.White)
                                 Spacer(modifier = Modifier.height(5.dp))
@@ -242,14 +247,27 @@ fun HomeScreen(
                                     items(productbyid.first().localimagepath.size) {
                                         index->
                                         val zoomState = rememberZoomState(initialScale = 1f)
-                                        AsyncImage(modifier= Modifier.fillParentMaxWidth().zoomable(
-                                            zoomState = zoomState
-                                        ), model = productbyid.first().localimagepath[index], contentDescription = null)
+                                        AsyncImage(modifier= Modifier
+                                            .fillParentMaxWidth()
+                                            .zoomable(
+                                                zoomState = zoomState
+                                            ), model = productbyid.first().localimagepath[index], contentDescription = null)
                                     }
                                 }
                             }
                                },
                         confirmButton = {
+                            Button(onClick = {
+                                val file= File(productbyid.first().localimagepath[0]!!)
+                                Log.d("PAPASWOLIO","${file}")
+                                viewModel.sendWhatsappMessage(
+                                    context = context, name = productbyid.first().name, imageFile = file,
+                                    price = productbyid.first().price,
+                                    payments = dec.format(pagos)
+                                )
+                            }) {
+                                Text(text="Enviar por whatsapp")
+                            }
                         },
                         dismissButton = {
                             Button(onClick = {
@@ -300,7 +318,9 @@ fun HomeScreen(
                             text = "Encuentra tu coleccion favorita aqui!",
                             color = Color.White,
                             fontSize = 23.sp,
-                            modifier = Modifier.width(350.dp).padding(15.dp),
+                            modifier = Modifier
+                                .width(350.dp)
+                                .padding(15.dp),
                             textAlign = TextAlign.Center
                         )
 
@@ -382,7 +402,11 @@ fun HomeScreen(
                                     .padding(end = 18.dp)
                                     .clickable {
                                         //Aqui se envia el color.
-                                        navigateDetails("#${backgroundcolor.value.toArgb().toUInt().toString(16).padStart(8,'0')}",
+                                        navigateDetails(
+                                            "#${
+                                                backgroundcolor.value.toArgb().toUInt().toString(16)
+                                                    .padStart(8, '0')
+                                            }",
                                             randomCol[0].idCollection.toString(), true
                                         )
                                     }) {
