@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.peraz.exampleui.data.remote.ResponseColProductModel
-import com.peraz.exampleui.data.remote.RetrofitInstance
 import com.peraz.exampleui.presentation.ui.theme.dark_blue
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

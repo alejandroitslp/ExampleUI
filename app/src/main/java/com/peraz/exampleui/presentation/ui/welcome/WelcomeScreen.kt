@@ -1,14 +1,8 @@
 package com.peraz.exampleui.presentation.ui.welcome
 
-import android.graphics.Paint.Align
-import android.renderscript.ScriptGroup
-import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,23 +11,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.SecureTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -58,10 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.peraz.exampleui.R
-import com.peraz.exampleui.Routes
-import com.peraz.exampleui.presentation.ui.home.HomeScreen
 import com.peraz.exampleui.presentation.ui.theme.dark_blue
-import com.peraz.exampleui.presentation.ui.theme.light_blue
 
 @Composable
 fun WelcomeScreen(
@@ -70,10 +52,10 @@ fun WelcomeScreen(
     onNavigatetoHome: () -> Unit,
 ){
     val isReady=remember {welcomeScreenViewModel.isReady}
-    var passwordVisible=remember{mutableStateOf(true)}
+    val isError=remember{welcomeScreenViewModel.isError}
+    val passwordVisible=remember{mutableStateOf(true)}
 
     LaunchedEffect(isReady.value) {
-        Log.d("maximino","${isReady.value}")
         if (isReady.value){
             onNavigatetoHome()
         }
@@ -81,7 +63,7 @@ fun WelcomeScreen(
     Column(horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier=Modifier.fillMaxSize()) {
-        Column(modifier=Modifier.fillMaxWidth().background(color = dark_blue).paint(painter = painterResource(R.drawable.abrazaditos),contentScale= ContentScale.Crop) .drawBehind{
+        Column(modifier=Modifier.fillMaxWidth().background(color = dark_blue).paint(painter = painterResource(R.drawable.twoexecutives),contentScale= ContentScale.Crop) .drawBehind{
             val width =size.width
             val height =size.height*.16f
 
@@ -108,7 +90,7 @@ fun WelcomeScreen(
                 Text(color = Color.Black ,fontSize = 17.sp ,text = "Aqui podrás encontrar una gran colección de joyeria en plata para revisar inventario, precios y detalles de tus items favoritos..",)
             }
             Column(modifier=Modifier.weight(.8f).width(280.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                var nametxt=remember{ mutableStateOf("") }
+                val nametxt=remember{ mutableStateOf("") }
                 val passwordtxt = remember {mutableStateOf("")}
                 OutlinedTextField(
                     textStyle = TextStyle(color = dark_blue),
@@ -120,6 +102,11 @@ fun WelcomeScreen(
                 Spacer(modifier=Modifier.height(10.dp))
                 Row{
                     OutlinedTextField(
+                        supportingText = {
+                            if (isError.value){
+                                Text(text = "Revise sus contraseñas", color = Color.Red)
+                            }
+                        },
                         textStyle = TextStyle(color = dark_blue),
                         value=passwordtxt.value,
                         onValueChange = {
@@ -147,7 +134,6 @@ fun WelcomeScreen(
                     Button(onClick = {
                         if (!isReady.value){
                             welcomeScreenViewModel.login(nametxt.value, passwordtxt.value)
-
                         }
                                      }, colors = ButtonDefaults.buttonColors(containerColor = dark_blue), shape = RectangleShape, modifier=Modifier.clip(RoundedCornerShape(15.dp))) {
                         Text(text = "Entrar", color = Color.White)

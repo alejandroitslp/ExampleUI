@@ -58,7 +58,6 @@ fun BottomBar(
 
             }){
                 Image(painter = painterResource(R.drawable.happy), contentDescription = null, modifier=Modifier.size(30.dp))
-                Text(text = "Happy", fontSize = 13.sp, color = dark_blue)
             }
 
         }
@@ -72,7 +71,6 @@ fun BottomBar(
                 logout()
             }) {
                 Image(painter = painterResource(R.drawable.exit), contentDescription = null, modifier=Modifier.size(30.dp))
-                Text(text = "Salir", fontSize = 13.sp, color = dark_blue)
             }
 
         }

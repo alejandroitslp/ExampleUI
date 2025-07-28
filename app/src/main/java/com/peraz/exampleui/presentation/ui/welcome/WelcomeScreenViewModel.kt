@@ -31,8 +31,8 @@ class WelcomeScreenViewModel @Inject constructor(
 
         var _isReady=mutableStateOf(false)
         val isReady=_isReady
-        var _isButtonAvailable=mutableStateOf(true)
-        var isButtonAvailable=_isButtonAvailable
+        var _isError=mutableStateOf(false)
+        val isError=_isError
 
     fun login(name: String?, password: String?){
         viewModelScope.launch {
@@ -48,6 +48,7 @@ class WelcomeScreenViewModel @Inject constructor(
                         _isReady.value=false
                     }
                     is Resource.Error -> {
+                        _isError.value=true
                     }
                 }
             }

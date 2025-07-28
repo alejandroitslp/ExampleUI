@@ -19,17 +19,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
@@ -49,12 +53,12 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavHost
 import coil.compose.AsyncImage
 import com.peraz.exampleui.presentation.ui.theme.dark_blue
@@ -69,6 +73,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.engawapg.lib.zoomable.rememberZoomState
 import net.engawapg.lib.zoomable.zoomable
+import java.text.DecimalFormat
+import kotlin.math.pow
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -157,18 +163,80 @@ fun HomeScreen(
                 if (mostrarImagen.value){
                     AlertDialog(
                         containerColor = Color.Black,
-                        modifier = Modifier.fillMaxWidth().height(500.dp),
+                        modifier = Modifier.fillMaxWidth().height(650.dp),
                         onDismissRequest = {},
                         title = {
                             Text(text = productbyid.first().name, color = Color.White)
                                 },
                         text = {
                             Column {
+                                var quantity = remember {mutableStateOf("1")}
+                                var prodprice=productbyid.first().price.replace(",","")
                                 Text(text = "Precio: $${productbyid.first().price} MxN", color = Color.White)
-                                Log.d("role", "${role}")
                                 if (role!=null && role.equals(1)){
                                     Text(text = "Stock: ${productbyid.first().stock}", color = Color.White)
                                 }
+
+                                OutlinedTextField(onValueChange = {quantity.value= it}, value = quantity.value, placeholder = {
+                                    Text(text = "Inserte numero de semanas.", color = Color.White)
+                                }, colors = TextFieldColors(
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.Yellow,
+                                    focusedContainerColor = Color.Black,
+                                    unfocusedContainerColor = Color.DarkGray,
+                                    disabledTextColor = Color.White,
+                                    errorTextColor = Color.White,
+                                    disabledContainerColor = Color.White,
+                                    errorContainerColor = Color.White,
+                                    cursorColor = Color.White,
+                                    errorCursorColor = Color.White,
+                                    textSelectionColors = TextSelectionColors(backgroundColor = Color.LightGray, handleColor = Color.Red),
+                                    focusedIndicatorColor = Color.White,
+                                    unfocusedIndicatorColor = Color.White,
+                                    disabledIndicatorColor = Color.White,
+                                    errorIndicatorColor = Color.White,
+                                    focusedLeadingIconColor = Color.White,
+                                    unfocusedLeadingIconColor = Color.White,
+                                    disabledLeadingIconColor = Color.White,
+                                    errorLeadingIconColor = Color.White,
+                                    focusedTrailingIconColor = Color.White,
+                                    unfocusedTrailingIconColor = Color.White,
+                                    disabledTrailingIconColor = Color.White,
+                                    errorTrailingIconColor = Color.White,
+                                    focusedLabelColor = Color.White,
+                                    unfocusedLabelColor = Color.White,
+                                    disabledLabelColor = Color.White,
+                                    errorLabelColor = Color.White,
+                                    focusedPlaceholderColor = Color.White,
+                                    unfocusedPlaceholderColor = Color.White,
+                                    disabledPlaceholderColor = Color.White,
+                                    errorPlaceholderColor = Color.White,
+                                    focusedSupportingTextColor = Color.White,
+                                    unfocusedSupportingTextColor = Color.White,
+                                    disabledSupportingTextColor = Color.White,
+                                    errorSupportingTextColor = Color.White,
+                                    focusedPrefixColor = Color.White,
+                                    unfocusedPrefixColor = Color.White,
+                                    disabledPrefixColor = Color.White,
+                                    errorPrefixColor = Color.White,
+                                    focusedSuffixColor = Color.White,
+                                    unfocusedSuffixColor = Color.White,
+                                    disabledSuffixColor = Color.White,
+                                    errorSuffixColor = Color.White,
+                                ), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number) )
+                                var pagos=0.00
+                                if (quantity.value!="1"&& quantity.value!=""){
+                                    if (prodprice.toDouble()<1000)
+                                        pagos= prodprice.toDouble()*((1+.07).pow(quantity.value.toDouble()))
+                                    else
+                                        pagos= prodprice.toDouble()*((1+.05).pow(quantity.value.toDouble()))
+
+                                }else{
+                                    pagos= prodprice.toDouble()
+                                }
+                                val dec=DecimalFormat("#,###.00")
+
+                                Text(text = "El valor en precio a ${quantity.value} semanas, es: ${dec.format(pagos)}", color = Color.White)
                                 Spacer(modifier = Modifier.height(5.dp))
                                 LazyRow(modifier = Modifier.fillMaxSize()) {
                                     items(productbyid.first().localimagepath.size) {

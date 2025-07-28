@@ -5,12 +5,11 @@ import android.util.Log
 import com.peraz.exampleui.data.local.ProductsDao
 import com.peraz.exampleui.data.local.ProductsEntity
 import com.peraz.exampleui.data.local.toModel
-import com.peraz.exampleui.data.remote.ApiInterface
+import com.peraz.exampleui.data.remote.RetrofitInterface
 import com.peraz.exampleui.data.remote.ColProductModel
 import com.peraz.exampleui.data.remote.toProductsEntityList
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
@@ -25,7 +24,7 @@ class ProductRepository @Inject constructor(
     private val productsDao: ProductsDao,
     @ApplicationContext private val context: Context,
     private val okHttpClient: OkHttpClient,
-    private val apiInterface: ApiInterface
+    private val retrofitInterface: RetrofitInterface
 ) {
     var _counterProgress = MutableSharedFlow<Float>()
     val counterProgress = _counterProgress.asSharedFlow()
@@ -39,7 +38,7 @@ class ProductRepository @Inject constructor(
                 mutableListOf<ColProductModel>()//Lista vacia que sirve para recolectar los productos y despues volverlo lista de entities
 
 
-            val apiProducts = apiInterface.getProducts()
+            val apiProducts = retrofitInterface.getProducts()
                 .body()?.products// apiProducts es la lista de resultado e items
 
 

@@ -2,8 +2,6 @@ package com.peraz.exampleui.domain.usecases
 
 import com.peraz.exampleui.data.CollectionRepository
 import com.peraz.exampleui.data.local.CollectionsEntity
-import com.peraz.exampleui.data.remote.ApiInterface
-import com.peraz.exampleui.data.remote.ResponseCollectionsModel
 import com.peraz.exampleui.domain.Resource
 import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow

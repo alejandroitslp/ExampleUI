@@ -2,15 +2,13 @@ package com.peraz.exampleui.data
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
 import com.peraz.exampleui.data.local.CollectionsDao
 import com.peraz.exampleui.data.local.CollectionsEntity
-import com.peraz.exampleui.data.remote.ApiInterface
+import com.peraz.exampleui.data.remote.RetrofitInterface
 import com.peraz.exampleui.data.remote.CollectionsModel
 import com.peraz.exampleui.data.remote.toCollectionsEntityList
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -23,12 +21,12 @@ class CollectionRepository @Inject constructor(
     private val collectionsDao: CollectionsDao,
     @ApplicationContext private val context: Context,
     private val okHttpClient: OkHttpClient,
-    private val apiInterface: ApiInterface
+    private val retrofitInterface: RetrofitInterface
     ) {
     suspend fun refreshCollection(): List<CollectionsEntity>?{
         try{
             var auxlistofcollections= mutableListOf<CollectionsModel>()
-            val apiCollections = apiInterface.getCollections().body()?.resultado
+            val apiCollections = retrofitInterface.getCollections().body()?.resultado
 
             //Obtiene la lista de colecciones desde internet
             if (!apiCollections.isNullOrEmpty()){
