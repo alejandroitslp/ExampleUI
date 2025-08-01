@@ -259,9 +259,9 @@ fun HomeScreen(
                         confirmButton = {
                             Button(onClick = {
                                 val file= File(productbyid.first().localimagepath[0]!!)
-                                Log.d("PAPASWOLIO","${file}")
+
                                 viewModel.sendWhatsappMessage(
-                                    context = context, name = productbyid.first().name, imageFile = file,
+                                    context = context, name = productbyid.first().name, images = productbyid.first().localimagepath,
                                     price = productbyid.first().price,
                                     payments = dec.format(pagos)
                                 )

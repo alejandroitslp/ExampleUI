@@ -57,7 +57,6 @@ class HomeScreenViewModel @Inject constructor(
     var _role=mutableStateOf<Int?>(0)
 
     val name=_name
-    val token=_token
     val role=_role
 
 
@@ -186,35 +185,40 @@ class HomeScreenViewModel @Inject constructor(
         name: String,
         price: String,
         payments: String,
-        imageFile: File
+        images: List<String?>
     ){
-        val fileUri: Uri? = try {
-            FileProvider.getUriForFile(
-                context,
-                "${context.packageName}",
-                imageFile
-            )
-        }catch (e: IllegalArgumentException){
-            Log.d("HSVM","Error creando la uri:  ${e.message}")
-            null
+        var imageFiles = ArrayList<File>()
+        var imageUris = ArrayList<Uri>()
+        for(file in images){
+            imageFiles.add(File(file!!))
+        }
+        for (file in imageFiles){
+            val fileUri: Uri? = try {
+                FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}",
+                    file
+                )
+            }catch (e: IllegalArgumentException){
+                Log.d("HSVM","Error creando la uri:  ${e.message}")
+                null
+            }
+            imageUris.add(fileUri!!)
         }
 
-        fileUri?.let { uri->
-            val intent = Intent(Intent.ACTION_SEND).apply {
+        if (imageUris.isNotEmpty()){
+                val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
                 type = "image/jpeg"
-                Log.d("fileUri","$uri")
-                putExtra(Intent.EXTRA_STREAM, uri)
+                putParcelableArrayListExtra(Intent.EXTRA_STREAM, imageUris)
                 putExtra(Intent.EXTRA_TEXT, "Nombre del producto: $name , precio normal: $${price}, el precio a pagos solicitado: $${payments}")
                 setPackage("com.whatsapp")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
             try {
                 context.startActivity(intent)
-            }catch (e: ActivityNotFoundException){
+            }catch(e: ActivityNotFoundException){
                 Toast.makeText(context, "Whatsapp no instalado", Toast.LENGTH_SHORT).show()
             }
         }
-
     }
-
 }
